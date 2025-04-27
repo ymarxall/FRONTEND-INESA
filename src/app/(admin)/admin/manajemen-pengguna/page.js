@@ -343,7 +343,7 @@ export default function ManajemenPengguna() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>NIK Admin</TableCell>
+                  <TableCell>NIP </TableCell>
                   <TableCell>Nama Lengkap</TableCell>
                   <TableCell>Email</TableCell>
                   <TableCell>Peran</TableCell>

@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
 import {
   Box,
   Button,
@@ -21,10 +20,9 @@ import {
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import Image from 'next/image';
-import { authService } from '@/services/authService';
 
 export default function SignIn() {
-  const [formData, setFormData] = useState({ nik: '', password: '' });
+  const [formData, setFormData] = useState({ nikadmin: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -34,7 +32,6 @@ export default function SignIn() {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotMessage, setForgotMessage] = useState(null);
   const [forgotError, setForgotError] = useState(null);
-  const { login } = useAuth();
   const router = useRouter();
 
   const handleChange = (e) => {
@@ -48,10 +45,10 @@ export default function SignIn() {
     setLoading(true);
     setError(null);
 
-    const { nik, password } = formData;
+    const { nikadmin, password } = formData;
 
-    if (!nik) {
-      setError('NIK harus diisi.');
+    if (!nikadmin || nikadmin.length !== 8) {
+      setError('NIP harus 8 digit.');
       setLoading(false);
       return;
     }
@@ -62,11 +59,32 @@ export default function SignIn() {
       return;
     }
 
-    const result = await login(nik, password);
-    if (!result.success) {
-      setError(result.error || 'Login gagal');
-      setLoading(false);
-    } else {
+    try {
+      const response = await fetch('http://localhost:8080/api/user/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nikadmin, password }),
+        credentials: 'include',
+      });
+
+      const text = await response.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (parseErr) {
+        throw new Error('Respons bukan JSON: ' + text);
+      }
+
+      if (response.ok && data.code === 200 && data.data) {
+        document.cookie = `token=${data.data}; path=/; max-age=3600; SameSite=Lax`;
+        console.log('Login berhasil, redirecting to /dashboard');
+        router.push('/admin/dashboard');
+      } else {
+        setError(data.message || 'Login gagal');
+      }
+    } catch (err) {
+      setError('Gagal terhubung ke server: ' + err.message);
+    } finally {
       setLoading(false);
     }
   };
@@ -82,14 +100,32 @@ export default function SignIn() {
       return;
     }
 
-    const response = await authService.forgotPassword(forgotEmail);
-    if (response.success) {
-      setForgotMessage(response.message);
-      setForgotEmail('');
-    } else {
-      setForgotError(response.error);
+    try {
+      const response = await fetch('http://localhost:8080/api/user/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+
+      const text = await response.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (parseErr) {
+        throw new Error('Respons bukan JSON: ' + text);
+      }
+
+      if (response.ok && data.code === 200) {
+        setForgotMessage(data.message || 'Instruksi reset password telah dikirim ke email Anda.');
+        setForgotEmail('');
+      } else {
+        setForgotError(data.message || 'Gagal mengirim permintaan reset password.');
+      }
+    } catch (err) {
+      setForgotError('Gagal terhubung ke server: ' + err.message);
+    } finally {
+      setForgotLoading(false);
     }
-    setForgotLoading(false);
   };
 
   const handleOpenForgotDialog = () => {
@@ -105,7 +141,7 @@ export default function SignIn() {
 
   return (
     <Container component="main" maxWidth="xs">
-      <Box sx={{ marginTop: 8, marginBottom: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <Box sx={{ marginTop: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <Paper elevation={3} sx={{ p: 4, width: '100%', borderRadius: '16px', backgroundColor: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(10px)' }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
             <Image
@@ -121,7 +157,7 @@ export default function SignIn() {
               Masuk
             </Typography>
             <Typography variant="body2" color="textSecondary" sx={{ mt: 1, textAlign: 'center' }}>
-              Masukkan NIK dan kata sandi Anda
+              Masukkan NIP dan kata sandi Anda
             </Typography>
           </Box>
 
@@ -132,10 +168,11 @@ export default function SignIn() {
               margin="normal"
               required
               fullWidth
-              name="nik"
-              label="NIK"
+              name="nikadmin"
+              label="NIP"
               type="text"
-              value={formData.nik}
+              id="nikadmin"
+              value={formData.nikadmin}
               onChange={handleChange}
               disabled={loading}
               error={!!error}
@@ -148,6 +185,7 @@ export default function SignIn() {
               name="password"
               label="Kata Sandi"
               type={showPassword ? 'text' : 'password'}
+              id="password"
               value={formData.password}
               onChange={handleChange}
               disabled={loading}
@@ -227,7 +265,7 @@ export default function SignIn() {
             variant="contained"
             sx={{ backgroundColor: '#1a237e', '&:hover': { backgroundColor: '#0d47a1' } }}
           >
-            {forgotLoading ? <CircularProgress size="24" color="inherit" /> : 'Kirim'}
+            {forgotLoading ? <CircularProgress size={24} color="inherit" /> : 'Kirim'}
           </Button>
         </DialogActions>
       </Dialog>
