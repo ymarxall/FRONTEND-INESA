@@ -66,6 +66,7 @@ export const API_ENDPOINTS = {
     SUMBANGAN_GET_ALL: `${PRODUCTION_API_BASE_URL}/api/sumbangan/all`,
     SUMBANGAN_IMAGE: (filename) => `${PRODUCTION_API_BASE_URL}/api/image/sumbangan/${filename}`,
     SUMBANGAN_DELETE: (id) => `${PRODUCTION_API_BASE_URL}/api/sumbangan/delete/${id}`,
+    UPLOAD_URL: `${PRODUCTION_API_BASE_URL}/api/uploads/`,
   },
 };
 

@@ -1,10 +1,10 @@
-import { getHeaders } from '@/config/api';
 import Cookies from 'js-cookie';
+import { format, isValid } from 'date-fns';
 
 // Fungsi untuk memformat tanggal dari datetime-local ke format backend
 const formatDateForBackend = (dateString) => {
     const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
+    if (!isValid(date)) {
         throw new Error('Format tanggal tidak valid');
     }
     const year = date.getFullYear();
@@ -19,31 +19,35 @@ const formatDateForBackend = (dateString) => {
 export const pemasukanService = {
     /**
      * Add new income record
-     * @param {Object} data - Income data
+     * @param {Object} data - Income data including optional file
      * @returns {Promise<Object>} Response data
      */
     async addPemasukan(data) {
         try {
-            // const token = Cookies.get('authToken');
-            // if (!token) throw new Error('Token tidak ditemukan');
+            const formData = new FormData();
+            formData.append('tanggal', formatDateForBackend(data.tanggal));
+            formData.append('nominal', Number(data.nominal.toString().replace(/\D/g, '')));
+            formData.append('kategori', data.kategori.trim());
+            formData.append('keterangan', data.keterangan.trim());
+            if (data.nota) {
+                formData.append('nota', data.nota);
+            }
 
-            // Prepare payload with properly formatted date
-            const payload = {
-                tanggal: formatDateForBackend(data.tanggal), // Formatted for backend
-                nominal: Number(data.nominal.toString().replace(/\D/g, '')),
-                kategori: data.kategori.trim(),
-                keterangan: data.keterangan.trim()
-            };
+            console.log('Sending FormData to server:', {
+                tanggal: formData.get('tanggal'),
+                nominal: formData.get('nominal'),
+                kategori: formData.get('kategori'),
+                keterangan: formData.get('keterangan'),
+                nota: formData.get('nota') ? 'File attached' : 'No file'
+            }); // Debugging
 
             const response = await fetch('/api/pemasukan/add', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    // 'Authorization': `Bearer ${token}`,
                     'ngrok-skip-browser-warning': 'true'
                 },
                 credentials: 'include',
-                body: JSON.stringify(payload),
+                body: formData,
             });
 
             const result = await response.json();
@@ -55,7 +59,7 @@ export const pemasukanService = {
             return {
                 success: true,
                 data: result.data,
-                message: 'Pemasukan berhasil ditambahkan'
+                message: result.message || 'Pemasukan berhasil ditambahkan'
             };
         } catch (error) {
             console.error('Error in addPemasukan:', error);
@@ -66,30 +70,35 @@ export const pemasukanService = {
     /**
      * Update income record
      * @param {string} id - Record ID
-     * @param {Object} data - Updated data
+     * @param {Object} data - Updated data including optional file
      * @returns {Promise<Object>} Response data
      */
     async updatePemasukan(id, data) {
         try {
-            // const token = Cookies.get('authToken');
-            // if (!token) throw new Error('Token tidak ditemukan');
+            const formData = new FormData();
+            formData.append('tanggal', formatDateForBackend(data.tanggal));
+            formData.append('nominal', Number(data.nominal.toString().replace(/\D/g, '')));
+            formData.append('kategori', data.kategori.trim());
+            formData.append('keterangan', data.keterangan.trim());
+            if (data.nota) {
+                formData.append('nota', data.nota);
+            }
 
-            const payload = {
-                tanggal: formatDateForBackend(data.tanggal), // Gunakan format yang sama dengan addPemasukan
-                nominal: Number(data.nominal.toString().replace(/\D/g, '')),
-                kategori: data.kategori.trim(),
-                keterangan: data.keterangan.trim()
-            };
+            console.log('Updating FormData for ID:', id, {
+                tanggal: formData.get('tanggal'),
+                nominal: formData.get('nominal'),
+                kategori: formData.get('kategori'),
+                keterangan: formData.get('keterangan'),
+                nota: formData.get('nota') ? 'File attached' : 'No file'
+            }); // Debugging
 
             const response = await fetch(`/api/pemasukan/update/${id}`, {
                 method: 'PUT',
                 headers: {
-                    'Content-Type': 'application/json',
-                    // 'Authorization': `Bearer ${token}`,
                     'ngrok-skip-browser-warning': 'true'
                 },
                 credentials: 'include',
-                body: JSON.stringify(payload),
+                body: formData,
             });
 
             const result = await response.json();
@@ -116,11 +125,6 @@ export const pemasukanService = {
      */
     async deletePemasukan(id) {
         try {
-            // const token = Cookies.get('authToken');
-            // if (!token) {
-            //     throw new Error('Token tidak ditemukan');
-            // }
-
             if (!id) {
                 throw new Error('ID tidak valid');
             }
@@ -128,7 +132,6 @@ export const pemasukanService = {
             const response = await fetch(`/api/pemasukan/delete/${id}`, {
                 method: 'DELETE',
                 headers: {
-                    // ...getHeaders(token),
                     'ngrok-skip-browser-warning': 'true'
                 },
                 credentials: 'include'
@@ -154,15 +157,9 @@ export const pemasukanService = {
      */
     async getAllPemasukan(page, pageSize) {
         try {
-            // const token = Cookies.get('authToken');
-            // if (!token) {
-            //     throw new Error('Token tidak ditemukan');
-            // }
-
             const response = await fetch(`/api/pemasukan/getall?page=${page}&page_size=${pageSize}`, {
                 method: 'GET',
                 headers: {
-                    // ...getHeaders(token),
                     'ngrok-skip-browser-warning': 'true'
                 },
                 credentials: 'include'
@@ -173,7 +170,7 @@ export const pemasukanService = {
                 throw new Error(errorData.message || 'Gagal mengambil data pemasukan');
             }
 
-            return await response.json(); // Kembalikan seluruh response termasuk metadata pagination
+            return await response.json();
         } catch (error) {
             console.error('Error in getAllPemasukan:', error);
             throw error;
@@ -190,11 +187,6 @@ export const pemasukanService = {
      */
     async getPemasukanByDateRange(start, end, page, pageSize) {
         try {
-            // const token = Cookies.get('authToken');
-            // if (!token) {
-            //     throw new Error('Token tidak ditemukan');
-            // }
-
             if (!start || !end) {
                 throw new Error('Tanggal mulai dan akhir harus diisi');
             }
@@ -202,7 +194,6 @@ export const pemasukanService = {
             const response = await fetch(`/api/pemasukan/getall?page=${page}&page_size=${pageSize}&start_date=${start}&end_date=${end}`, {
                 method: 'GET',
                 headers: {
-                    // ...getHeaders(token),
                     'ngrok-skip-browser-warning': 'true'
                 },
                 credentials: 'include'
@@ -213,7 +204,7 @@ export const pemasukanService = {
                 throw new Error(errorData.message || 'Gagal mengambil data pemasukan berdasarkan rentang tanggal');
             }
 
-            return await response.json(); // Kembalikan seluruh response termasuk metadata pagination
+            return await response.json();
         } catch (error) {
             console.error('Error in getPemasukanByDateRange:', error);
             throw error;
@@ -227,11 +218,6 @@ export const pemasukanService = {
      */
     async getPemasukanById(id) {
         try {
-            // const token = Cookies.get('authToken');
-            // if (!token) {
-            //     throw new Error('Token tidak ditemukan');
-            // }
-
             if (!id) {
                 throw new Error('ID tidak valid');
             }
@@ -239,7 +225,6 @@ export const pemasukanService = {
             const response = await fetch(`/api/pemasukan/get/${id}`, {
                 method: 'GET',
                 headers: {
-                    // ...getHeaders(token),
                     'ngrok-skip-browser-warning': 'true'
                 },
                 credentials: 'include'

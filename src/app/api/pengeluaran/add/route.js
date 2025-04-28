@@ -48,7 +48,7 @@ export async function POST(request) {
         newFormData.append('nominal', formData.get('nominal'));
 
         // Forward request ke backend API
-        const response = await fetch(API_ENDPOINTS.PENGELUARAN_ADD, {
+        const response = await fetch(API_ENDPOINTS.BENDAHARA.PENGELUARAN_ADD, {
             method: 'POST',
             body: newFormData
         });

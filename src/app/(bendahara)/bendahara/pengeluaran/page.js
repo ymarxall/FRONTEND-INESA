@@ -43,7 +43,7 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
 import { styled } from '@mui/material/styles'
 import { pengeluaranService } from '@/services/pengeluaranService'
 import { laporanService } from '@/services/laporanService'
-import { UPLOAD_URL } from '@/config/api'
+import { API_ENDPOINTS } from '@/config/api'
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers'
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 import { format, isValid, startOfDay, endOfDay } from 'date-fns'
@@ -452,7 +452,7 @@ export default function Pengeluaran() {
       nota: null
     })
     if (row.nota) {
-      setPreviewUrl(`${UPLOAD_URL}${row.nota}`)
+      setPreviewUrl(`${API_ENDPOINTS.BENDAHARA.UPLOAD_URL}${row.nota}`)
     } else {
       setPreviewUrl('')
     }
@@ -493,7 +493,7 @@ export default function Pengeluaran() {
     if (notaPath) {
       setNotaDialog({
         open: true,
-        imageUrl: `${UPLOAD_URL}${notaPath}`
+        imageUrl: `${API_ENDPOINTS.BENDAHARA.UPLOAD_URL}${notaPath}`
       })
     } else {
       showSnackbar('Nota tidak tersedia', 'warning')

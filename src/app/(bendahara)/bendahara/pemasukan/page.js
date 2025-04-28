@@ -44,7 +44,7 @@ import ReceiptIcon from '@mui/icons-material/Receipt'
 import { styled } from '@mui/material/styles'
 import { pemasukanService } from '@/services/pemasukanService'
 import { laporanService } from '@/services/laporanService'
-import { UPLOAD_URL } from '@/config/api'
+import { API_ENDPOINTS } from '@/config/api'
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers'
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 import { format, isValid, startOfDay, endOfDay } from 'date-fns'
@@ -442,7 +442,7 @@ export default function Pemasukan() {
     })
     setCustomCategory(isPredefinedCategory ? '' : row.kategori)
     if (row.nota) {
-      setPreviewUrl(`${UPLOAD_URL}${row.nota}`)
+      setPreviewUrl(`${API_ENDPOINTS.BENDAHARA.UPLOAD_URL}${row.nota}`)
     } else {
       setPreviewUrl('')
     }
@@ -467,10 +467,7 @@ export default function Pemasukan() {
       } else {
         await fetchData()
       }
-      const { start, end } = getDateRange(timeRange)
-      const total = !start || !end
-        ? await laporanService.getTotalPemasukan()
-        : await laporanService.getTotalPemasukanByDateRange(start, end)
+      const total = await laporanService.getTotalPemasukan()
       setTotalPemasukan(Number.isFinite(total) ? total : 0)
       showSnackbar(`Pemasukan berhasil dihapus`, 'success')
     } catch (error) {
@@ -486,7 +483,7 @@ export default function Pemasukan() {
     if (notaPath) {
       setNotaDialog({
         open: true,
-        imageUrl: `${UPLOAD_URL}${notaPath}`
+        imageUrl: `${API_ENDPOINTS.BENDAHARA.UPLOAD_URL}${notaPath}`
       })
     } else {
       showSnackbar('Nota tidak tersedia', 'warning')
@@ -553,10 +550,7 @@ export default function Pemasukan() {
       showSnackbar(result.message, 'success')
       setShowModal(false)
       await fetchData()
-      const { start, end } = getDateRange(timeRange)
-      const total = !start || !end
-        ? await laporanService.getTotalPemasukan()
-        : await laporanService.getTotalPemasukanByDateRange(start, end)
+      const total = await laporanService.getTotalPemasukan()
       setTotalPemasukan(Number.isFinite(total) ? total : 0)
     } catch (error) {
       console.error('Error saving data:', error)

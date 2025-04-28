@@ -95,7 +95,7 @@ export async function PUT(request, { params }) {
     };
 
     // 9. Forward to backend API
-    const backendResponse = await fetch(`${API_ENDPOINTS.PEMASUKAN_UPDATE(id)}`, {
+    const backendResponse = await fetch(`${API_ENDPOINTS.BENDAHARA.PEMASUKAN_UPDATE(id)}`, {
       method: 'PUT',
       headers: {
         // 'Authorization': token,
