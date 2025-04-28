@@ -193,7 +193,9 @@ export const pengeluaranService = {
 
     /**
      * Get all expenditure records
-     * @returns {Promise<Array>} Array of expenditure records
+     * @param {number} page - Page number
+     * @param {number} pageSize - Number of records per page
+     * @returns {Promise<Object>} Pagination response with expenditure records
      */
     getAllPengeluaran: async (page = 1, pageSize = 10) => {
         try {
@@ -219,6 +221,46 @@ export const pengeluaranService = {
             return await response.json(); // Kembalikan seluruh response termasuk metadata pagination
         } catch (error) {
             console.error('Error in getAllPengeluaran:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Get expenditure records by date range
+     * @param {string} start - Start date in YYYY-MM-DD format
+     * @param {string} end - End date in YYYY-MM-DD format
+     * @param {number} page - Page number
+     * @param {number} pageSize - Number of records per page
+     * @returns {Promise<Object>} Pagination response with expenditure records
+     */
+    getPengeluaranByDateRange: async (start, end, page = 1, pageSize = 10) => {
+        try {
+            // const token = Cookies.get('authToken');
+            // if (!token) {
+            //     throw new Error('Token tidak ditemukan');
+            // }
+
+            if (!start || !end) {
+                throw new Error('Tanggal mulai dan akhir harus diisi');
+            }
+
+            const response = await fetch(`/api/pengeluaran/getall?page=${page}&page_size=${pageSize}&start_date=${start}&end_date=${end}`, {
+                method: 'GET',
+                headers: {
+                    // ...getHeaders(token),
+                    'ngrok-skip-browser-warning': 'true'
+                },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Gagal mengambil data pengeluaran berdasarkan rentang tanggal');
+            }
+
+            return await response.json(); // Kembalikan seluruh response termasuk metadata pagination
+        } catch (error) {
+            console.error('Error in getPengeluaranByDateRange:', error);
             throw error;
         }
     },
