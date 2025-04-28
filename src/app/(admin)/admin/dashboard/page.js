@@ -99,7 +99,7 @@ const TextNoCursor = styled(Typography)({
 })
 
 // Fungsi fetch dengan timeout dan retry
-const fetchWithTimeout = async (url, options, timeout = 15000) => {
+const fetchWithTimeout = async (url, options, timeout = 30000) => {
   const controller = new AbortController()
   const id = setTimeout(() => controller.abort(), timeout)
   try {
@@ -153,10 +153,19 @@ export default function Dashboard() {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
         'ngrok-skip-browser-warning': 'true',
+        'Accept': 'application/json',
+      }
+
+      // Cek koneksi ke server
+      try {
+        await fetch('http://localhost:8080/api/ping', { method: 'GET' }) // Endpoint untuk cek server
+      } catch (pingError) {
+        throw new Error('Server tidak dapat dijangkau. Pastikan backend berjalan di localhost:8080.')
       }
 
       // Fetch data penduduk
       const pendudukResponse = await fetchWithTimeout('http://localhost:8080/api/dashboard/stats', {
+        method: 'GET',
         headers,
         credentials: 'include',
       })
@@ -165,9 +174,11 @@ export default function Dashboard() {
         throw new Error(`Gagal mengambil data penduduk: ${pendudukResponse.status} ${text}`)
       }
       const pendudukData = await pendudukResponse.json()
+      console.log('[FETCH] Data penduduk:', pendudukData)
 
       // Fetch data pemasukan
       const pemasukanResponse = await fetchWithTimeout('http://localhost:8080/api/pemasukan/total', {
+        method: 'GET',
         headers,
         credentials: 'include',
       })
@@ -175,6 +186,7 @@ export default function Dashboard() {
 
       // Fetch data pengeluaran
       const pengeluaranResponse = await fetchWithTimeout('http://localhost:8080/api/pengeluaran/total', {
+        method: 'GET',
         headers,
         credentials: 'include',
       })
@@ -182,6 +194,7 @@ export default function Dashboard() {
 
       // Fetch data surat masuk
       const suratMasukResponse = await fetchWithTimeout('http://localhost:8080/api/surat/masuk/total', {
+        method: 'GET',
         headers,
         credentials: 'include',
       })
@@ -189,6 +202,7 @@ export default function Dashboard() {
 
       // Fetch data surat keluar
       const suratKeluarResponse = await fetchWithTimeout('http://localhost:8080/api/surat/keluar/total', {
+        method: 'GET',
         headers,
         credentials: 'include',
       })
@@ -207,18 +221,34 @@ export default function Dashboard() {
       console.error('[FETCH] Gagal mengambil data statistik:', error)
       if (retryCount > 0) {
         console.log(`[FETCH] Mencoba lagi, sisa percobaan: ${retryCount}`)
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        await new Promise(resolve => setTimeout(resolve, 2000)) // Tunggu 2 detik sebelum retry
         return fetchStats(retryCount - 1)
       }
-      let errorMessage = error.message
+
+      let errorMessage = 'Terjadi kesalahan saat mengambil data.'
       if (error.name === 'AbortError') {
-        errorMessage = 'Permintaan timeout, silakan coba lagi'
+        errorMessage = 'Permintaan timeout. Silakan coba lagi atau periksa koneksi Anda.'
       } else if (error.message.includes('Failed to fetch')) {
-        errorMessage = 'Gagal terhubung ke server, periksa backend atau koneksi'
+        errorMessage = 'Gagal terhubung ke server. Pastikan backend berjalan di localhost:8080 dan tidak ada masalah CORS.'
       } else if (error.message.includes('401')) {
-        errorMessage = 'Token tidak valid, silakan login kembali'
+        errorMessage = 'Token tidak valid. Silakan login kembali.'
+      } else if (error.message.includes('Server tidak dapat dijangkau')) {
+        errorMessage = error.message
+      } else {
+        errorMessage = `Kesalahan: ${error.message}`
       }
       setError(errorMessage)
+
+      // Fallback data jika gagal
+      setStats({
+        totalPenduduk: 0,
+        lakiLaki: 0,
+        perempuan: 0,
+        totalPemasukan: 0,
+        totalPengeluaran: 0,
+        suratMasuk: 0,
+        suratKeluar: 0,
+      })
     } finally {
       setLoading(false)
     }

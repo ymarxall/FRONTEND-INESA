@@ -63,7 +63,7 @@ export default function DataPegawai() {
   const [editingId, setEditingId] = useState(null)
   const [adminId, setAdminId] = useState(null)
   const [adminPassword, setAdminPassword] = useState('')
-  const [adminRole, setAdminRole] = useState('') // State untuk role
+  const [adminRole, setAdminRole] = useState('')
   const [formData, setFormData] = useState({
     nip: '',
     namalengkap: '',
@@ -313,7 +313,8 @@ export default function DataPegawai() {
       return
     }
 
-    if (!/^\d{8,}$/.test(nip)) {
+    // Validasi NIP hanya untuk tambah data baru
+    if (!editingId && !/^\d{8,}$/.test(nip)) {
       showAlertMessage('NIP harus minimal 8 digit angka', 'error')
       return
     }
@@ -382,7 +383,7 @@ export default function DataPegawai() {
         throw new Error(data.message || `Gagal menyimpan data: ${res.status}`)
       }
 
-      showAlertMessage(data.message || 'Data berhasil disimpan', 'success')
+      showAlertMessage(data.message || (editingId ? 'Data berhasil diperbarui' : 'Data berhasil disimpan'), 'success')
       setShowModal(false)
       setEditingId(null)
       setFormData({
@@ -412,7 +413,7 @@ export default function DataPegawai() {
   const handleOpenAdminModal = (id) => {
     setAdminId(id)
     setAdminPassword('')
-    setAdminRole('') // Reset role saat membuka modal
+    setAdminRole('')
     setShowAdminModal(true)
   }
 
@@ -579,9 +580,9 @@ export default function DataPegawai() {
                             }}
                             onLoad={() => console.log(`[IMG] Gambar ${row.foto} berhasil dimuat`)}
                             onError={(e) => {
-                              console.error(`[IMG] Gagal memuat gambar: ${row.foto}`);
-                              e.target.onerror = null;
-                              e.target.src = '/default-avatar.png';
+                              console.error(`[IMG] Gagal memuat gambar: ${row.foto}`)
+                              e.target.onerror = null
+                              e.target.src = '/default-avatar.png'
                             }}
                           />
                         ) : (
