@@ -404,13 +404,6 @@ export default function Dashboard() {
                 <TextNoCursor variant="h6" sx={{ fontWeight: 600, color: '#1a237e', mb: 2 }}>
                   Statistik Surat
                 </TextNoCursor>
-                <TextField
-                  label="Cari Jenis Surat"
-                  variant="outlined"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  sx={{ mb: 2, width: '100%' }}
-                />
                 <TableCard sx={{ display: { xs: 'none', sm: 'block' } }}>
                   <TableContainer>
                     <Table>

@@ -1,51 +1,43 @@
-'use client';
+'use client'
 
-import { useRouter } from 'next/navigation';
-import { Box, Button, Typography } from '@mui/material';
+import Navbar from "@/components/profile/Navbar"
+import Home from "@/components/profile/Home"
+import Pizza from "@/components/profile/Pizza"
+import Pasta from "@/components/profile/Pasta"
+import About from "@/components/profile/About"
+import Location from "@/components/profile/Location"
+import FAQSuratDesa from "@/components/profile/Accordion"
+import FeatureCard from "@/components/profile/FeatureCard"
+import Gallery from "@/components/profile/Gallery"
+import StrukturDesaCard from "@/components/profile/StrukturDesa"
+import StatistikPenduduk from "@/components/profile/JumlahPenduduk"
 
-export default function Home() {
-  const router = useRouter();
+import { createTheme, responsiveFontSizes, ThemeProvider } from "@mui/material"
 
-  const handleNavigate = (path) => {
-    console.log(`Navigating to: ${path}`);
-    try {
-      router.push(path);
-    } catch (error) {
-      console.error('Navigation error:', error);
+let theme = createTheme({
+    typography: {
+        fontSize: 10
     }
-  };
+})
 
-  return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 2 }}>
-      <Typography variant="h4" gutterBottom>
-        Selamat Datang di Sistem Informasi Desa
-      </Typography>
-      <Typography variant="body1" color="text.secondary" gutterBottom>
-        Pilih dashboard untuk menguji tampilan:
-      </Typography>
-      <Box sx={{ display: 'flex', gap: 2 }}>
-        <Button
-          variant="contained"
-          onClick={() => handleNavigate('/admin/dashboard')}
-          sx={{ backgroundColor: '#1a237e', '&:hover': { backgroundColor: '#0d47a1' } }}
-        >
-          Dashboard Admin
-        </Button>
-        <Button
-          variant="contained"
-          onClick={() => handleNavigate('/bendahara/dashboard')}
-          sx={{ backgroundColor: '#1a237e', '&:hover': { backgroundColor: '#0d47a1' } }}
-        >
-          Dashboard Bendahara
-        </Button>
-        <Button
-          variant="contained"
-          onClick={() => handleNavigate('/sekretaris/dashboard')}
-          sx={{ backgroundColor: '#1a237e', '&:hover': { backgroundColor: '#0d47a1' } }}
-        >
-          Dashboard Sekretaris
-        </Button>
-      </Box>
-    </Box>
-  );
+theme = responsiveFontSizes(theme, { factor: 1 });
+
+export default function Desa() {
+    return (
+        <ThemeProvider theme={theme}>
+            <div className="App">
+                <Navbar />
+                <Home />
+                <FeatureCard />
+                <Pizza />
+                <StrukturDesaCard />
+                <Pasta />
+                <Gallery />
+                <About />
+                <StatistikPenduduk />
+                <FAQSuratDesa />
+                <Location />
+            </div>
+        </ThemeProvider>
+    )
 }

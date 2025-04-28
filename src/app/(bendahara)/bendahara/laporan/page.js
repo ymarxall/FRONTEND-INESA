@@ -31,7 +31,8 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
+  TextField
 } from '@mui/material'
 import {
   FileDownload as FileDownloadIcon,
@@ -216,7 +217,7 @@ const StyledFormControl = styled(FormControl)(({ theme }) => ({
 export default function LaporanKeuangan() {
   const [data, setData] = useState([])
   const [filteredData, setFilteredData] = useState([])
-  const [timeRange, setTimeRange] = useState('all')
+  const [timeRange, setTimeRange] = useState('7days') // Default to '7days'
   const [loading, setLoading] = useState(true)
   const [isLoadingSummary, setIsLoadingSummary] = useState(true)
   const [error, setError] = useState(null)
@@ -230,7 +231,7 @@ export default function LaporanKeuangan() {
   const [tempEndDate, setTempEndDate] = useState(null)
   const [confirmedStartDate, setConfirmedStartDate] = useState(null)
   const [confirmedEndDate, setConfirmedEndDate] = useState(null)
-  const [previousTimeRange, setPreviousTimeRange] = useState('all')
+  const [previousTimeRange, setPreviousTimeRange] = useState('7days') // Default to '7days'
   const open = Boolean(anchorEl)
 
   useEffect(() => {
@@ -263,40 +264,27 @@ export default function LaporanKeuangan() {
   }, [])
 
   const formatDate = (date) => {
-    if (!date || !isValid(date)) return null
-    return format(date, 'yyyy-MM-dd')
+    if (!date) return null
+    const d = new Date(date)
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
   }
 
   const formatDateTime = (backendDateString) => {
-    if (!backendDateString || typeof backendDateString !== 'string') {
-      console.warn('Tanggal tidak valid atau kosong:', backendDateString)
-      return '-'
-    }
+    if (!backendDateString) return '-'
     try {
-      let parsedDate
-      const possibleFormats = [
-        'yyyy-MM-dd HH:mm:ss',
-        'yyyy-MM-dd HH:mm',
-        "yyyy-MM-dd'T'HH:mm:ss",
-        "yyyy-MM-dd'T'HH:mm",
-        'dd-MM-yyyy HH:mm',
-        'dd/MM/yyyy HH:mm',
-        'yyyy-MM-dd',
-        'dd-MM-yyyy',
-        'MM-dd-yyyy HH:mm',
-        "yyyy-MM-dd'T'HH:mm:ss.SSSX",
-        'yyyy-MM-dd HH:mm:ss.SSS'
-      ]
-      for (const formatString of possibleFormats) {
-        parsedDate = parse(backendDateString, formatString, new Date())
-        console.log(`Trying format ${formatString}:`, parsedDate, isValid(parsedDate))
-        if (isValid(parsedDate)) break
-      }
-      if (!isValid(parsedDate)) {
-        console.warn(`Tanggal tidak valid: ${backendDateString}`)
-        return backendDateString
-      }
-      return format(parsedDate, 'yyyy-MM-dd HH:mm')
+      const [datePart, timePart] = backendDateString.split(' ')
+      const [day, month, year] = datePart.split('-')
+      const [hours, minutes] = timePart.split(':')
+      return new Date(year, month - 1, day, hours, minutes).toLocaleString('id-ID', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
     } catch (e) {
       console.error('Error formatting date:', e)
       return backendDateString
@@ -308,6 +296,7 @@ export default function LaporanKeuangan() {
     today.setHours(0, 0, 0, 0)
     const startDate = new Date()
     startDate.setHours(0, 0, 0, 0)
+
     if (range === 'custom' && confirmedStartDate && confirmedEndDate) {
       const start = startOfDay(new Date(confirmedStartDate))
       const end = endOfDay(new Date(confirmedEndDate))
@@ -321,12 +310,13 @@ export default function LaporanKeuangan() {
       }
       return { start: formatDate(start), end: formatDate(end) }
     }
+
     switch (range) {
       case 'today':
-        return { start: formatDate(today), end: formatDate(today) }
+        return { start: formatDate(today), end: formatDate(today.setHours(24, 0, 0, 0)) }
       case 'yesterday':
         startDate.setDate(today.getDate() - 1)
-        return { start: formatDate(startDate), end: formatDate(startDate) }
+        return { start: formatDate(startDate), end: formatDate(today) }
       case '7days':
         startDate.setDate(today.getDate() - 7)
         return { start: formatDate(startDate), end: formatDate(today) }
@@ -352,10 +342,15 @@ export default function LaporanKeuangan() {
     try {
       setLoading(true)
       const { start, end } = getDateRange(range)
-      console.log('Fetching data for range:', start, '-', end)
       let rangeData
       if (!start || !end) {
-        rangeData = await laporanService.getAllLaporan()
+        // For invalid cases, fetch last 7 days by default
+        const defaultStart = new Date()
+        defaultStart.setDate(defaultStart.getDate() - 7)
+        rangeData = await laporanService.getLaporanByDateRange(
+          formatDate(defaultStart),
+          formatDate(new Date())
+        )
       } else {
         const startDate = formatDate(start)
         const endDate = formatDate(end)
@@ -421,7 +416,7 @@ export default function LaporanKeuangan() {
       doc.text('Desa Bontomanai, Kec. Rumbia, Kab. Jeneponto', pageWidth / 2, currentY, { align: 'center' })
       currentY += 8
 
-      const periodLabel = timeRangeOptions.find(opt => opt.value === timeRange)?.label || 'Semua'
+      const periodLabel = timeRangeOptions.find(opt => opt.value === timeRange)?.label || '7 Hari Terakhir'
       doc.text(`Periode: ${periodLabel}`, pageWidth / 2, currentY, { align: 'center' })
       currentY += 10
 
@@ -591,8 +586,7 @@ export default function LaporanKeuangan() {
     { value: '3months', label: '3 Bulan Terakhir' },
     { value: '6months', label: '6 Bulan Terakhir' },
     { value: '1year', label: '1 Tahun Terakhir' },
-    { value: 'all', label: 'Semua' },
-    { value: 'custom', label: 'Custome' }
+    { value: 'custom', label: 'Custom' }
   ]
 
   const handleTimeRangeChange = (e) => {
@@ -913,41 +907,28 @@ export default function LaporanKeuangan() {
                       onChange={(newValue) => setTempStartDate(newValue)}
                       disableFuture
                       maxDate={tempEndDate || undefined}
-                      sx={{
-                        flex: 1,
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: '10px',
-                          '&:hover fieldset': {
-                            borderColor: '#1976D2',
-                          },
-                          '&.Mui-focused fieldset': {
-                            borderColor: '#1976D2',
-                            borderWidth: '2px',
-                          }
-                        },
-                        '& .MuiPickersDay-day': {
-                          borderRadius: '8px',
-                          '&.Mui-selected': {
-                            backgroundColor: '#1976D2',
-                            '&:hover': {
-                              backgroundColor: '#1565C0'
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          variant="outlined"
+                          size="small"
+                          fullWidth
+                          helperText={tempStartDate && !isValid(tempStartDate) ? 'Tanggal tidak valid' : null}
+                          error={tempStartDate && !isValid(tempStartDate)}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              borderRadius: '10px',
+                              '&:hover fieldset': {
+                                borderColor: '#1976D2',
+                              },
+                              '&.Mui-focused fieldset': {
+                                borderColor: '#1976D2',
+                                borderWidth: '2px',
+                              }
                             }
-                          }
-                        },
-                        '& .MuiPickersCalendarHeader-label': {
-                          fontWeight: 600,
-                          color: '#1976D2'
-                        }
-                      }}
-                      slotProps={{
-                        textField: {
-                          variant: 'outlined',
-                          size: 'small',
-                          fullWidth: true,
-                          helperText: tempStartDate && !isValid(tempStartDate) ? 'Tanggal tidak valid' : null,
-                          error: tempStartDate && !isValid(tempStartDate)
-                        }
-                      }}
+                          }}
+                        />
+                      )}
                     />
                     <DatePicker
                       label="Tanggal Akhir"
@@ -955,41 +936,28 @@ export default function LaporanKeuangan() {
                       onChange={(newValue) => setTempEndDate(newValue)}
                       disableFuture
                       minDate={tempStartDate || undefined}
-                      sx={{
-                        flex: 1,
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: '10px',
-                          '&:hover fieldset': {
-                            borderColor: '#1976D2',
-                          },
-                          '&.Mui-focused fieldset': {
-                            borderColor: '#1976D2',
-                            borderWidth: '2px',
-                          }
-                        },
-                        '& .MuiPickersDay-day': {
-                          borderRadius: '8px',
-                          '&.Mui-selected': {
-                            backgroundColor: '#1976D2',
-                            '&:hover': {
-                              backgroundColor: '#1565C0'
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          variant="outlined"
+                          size="small"
+                          fullWidth
+                          helperText={tempEndDate && !isValid(tempEndDate) ? 'Tanggal tidak valid' : null}
+                          error={tempEndDate && !isValid(tempEndDate)}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              borderRadius: '10px',
+                              '&:hover fieldset': {
+                                borderColor: '#1976D2',
+                              },
+                              '&.Mui-focused fieldset': {
+                                borderColor: '#1976D2',
+                                borderWidth: '2px',
+                              }
                             }
-                          }
-                        },
-                        '& .MuiPickersCalendarHeader-label': {
-                          fontWeight: 600,
-                          color: '#1976D2'
-                        }
-                      }}
-                      slotProps={{
-                        textField: {
-                          variant: 'outlined',
-                          size: 'small',
-                          fullWidth: true,
-                          helperText: tempEndDate && !isValid(tempEndDate) ? 'Tanggal tidak valid' : null,
-                          error: tempEndDate && !isValid(tempEndDate)
-                        }
-                      }}
+                          }}
+                        />
+                      )}
                     />
                   </Box>
                   {tempStartDate && tempEndDate && startOfDay(tempStartDate) > endOfDay(tempEndDate) && (
@@ -999,11 +967,10 @@ export default function LaporanKeuangan() {
                   )}
                   <Box sx={{ mt: 2 }}>
                     <Typography variant="body2" color="textSecondary">
-                     Pilih rentang tanggal untuk memfilter data pemasukan. Tanggal yang dipilih akan diterapkan setelah Anda menekan tombol "Terapkan".
+                      Pilih rentang tanggal untuk memfilter data laporan keuangan. Tanggal yang dipilih akan diterapkan setelah Anda menekan tombol "Terapkan".
                     </Typography>
-                    </Box>   
-                 </Box>
-               
+                  </Box>
+                </Box>
               </DialogContent>
               <DialogActions sx={{
                 px: 4,

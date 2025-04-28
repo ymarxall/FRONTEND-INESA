@@ -343,7 +343,7 @@ export default function ManajemenPengguna() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>NIK Admin</TableCell>
+                  <TableCell>NIP </TableCell>
                   <TableCell>Nama Lengkap</TableCell>
                   <TableCell>Email</TableCell>
                   <TableCell>Peran</TableCell>
@@ -407,7 +407,7 @@ export default function ManajemenPengguna() {
               required
               fullWidth
               name="nikadmin"
-              label="NIK Admin"
+              label="NIP Admin"
               value={formData.nikadmin}
               onChange={handleChange}
               inputProps={{ maxLength: 16, pattern: '[0-9]*' }}
