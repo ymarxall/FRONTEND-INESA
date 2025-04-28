@@ -313,7 +313,7 @@ export default function Dashboard() {
         <HistoryCard>
           <CardHeader
             title={
-              <Typography variant="h5" sx={{ fontWeight: 600, color: '#1a237e' }}>
+              <Typography sx={{ fontWeight: 600, color: '#1a237e' }}>
                 Transaksi Terakhir
               </Typography>
             }

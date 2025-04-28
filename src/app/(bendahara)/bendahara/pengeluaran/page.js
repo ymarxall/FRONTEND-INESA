@@ -174,10 +174,8 @@ export default function Pengeluaran() {
     tanggal: '',
     nominal: '',
     keterangan: '',
-    kategori: '',
     nota: null
   })
-  const [customCategory, setCustomCategory] = useState('') // State baru untuk kategori kustom
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
@@ -195,7 +193,7 @@ export default function Pengeluaran() {
     open: false,
     imageUrl: ''
   })
-  const [timeRange, setTimeRange] = useState('all')
+  const [timeRange, setTimeRange] = useState('7days')
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [totalItems, setTotalItems] = useState(0)
@@ -205,7 +203,7 @@ export default function Pengeluaran() {
   const [tempEndDate, setTempEndDate] = useState(null)
   const [confirmedStartDate, setConfirmedStartDate] = useState(null)
   const [confirmedEndDate, setConfirmedEndDate] = useState(null)
-  const [previousTimeRange, setPreviousTimeRange] = useState('all')
+  const [previousTimeRange, setPreviousTimeRange] = useState('7days')
 
   const timeRangeOptions = [
     { value: 'today', label: 'Hari Ini' },
@@ -215,15 +213,35 @@ export default function Pengeluaran() {
     { value: '3months', label: '3 Bulan Terakhir' },
     { value: '6months', label: '6 Bulan Terakhir' },
     { value: '1year', label: '1 Tahun Terakhir' },
-    { value: 'all', label: 'Semua' },
-    { value: 'custom', label: 'Custom' } // Perbaiki ejaan "Custome" ke "Custom"
+    { value: 'custom', label: 'Custom' }
   ]
 
-  const predefinedCategories = ['Operasional', 'Pembangunan', 'Kesejahteraan', 'Lainnya']
-
   const formatDate = (date) => {
-    if (!date || !isValid(date)) return null
-    return format(date, 'yyyy-MM-dd')
+    if (!date) return null
+    const d = new Date(date)
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+
+  const formatDateTime = (backendDateString) => {
+    if (!backendDateString) return '-'
+    try {
+      const [datePart, timePart] = backendDateString.split(' ')
+      const [day, month, year] = datePart.split('-')
+      const [hours, minutes] = timePart.split(':')
+      return new Date(year, month - 1, day, hours, minutes).toLocaleString('id-ID', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    } catch (e) {
+      console.error('Error formatting date:', e)
+      return backendDateString
+    }
   }
 
   const getDateRange = (range) => {
@@ -231,6 +249,7 @@ export default function Pengeluaran() {
     today.setHours(0, 0, 0, 0)
     const startDate = new Date()
     startDate.setHours(0, 0, 0, 0)
+
     if (range === 'custom' && confirmedStartDate && confirmedEndDate) {
       const start = startOfDay(new Date(confirmedStartDate))
       const end = endOfDay(new Date(confirmedEndDate))
@@ -240,6 +259,7 @@ export default function Pengeluaran() {
       }
       return { start: formatDate(start), end: formatDate(end) }
     }
+
     switch (range) {
       case 'today':
         return { start: formatDate(today), end: formatDate(today.setHours(24, 0, 0, 0)) }
@@ -261,9 +281,9 @@ export default function Pengeluaran() {
       case '1year':
         startDate.setFullYear(today.getFullYear() - 1)
         return { start: formatDate(startDate), end: formatDate(today) }
-      case 'all':
       default:
-        return { start: null, end: null }
+        startDate.setDate(today.getDate() - 7)
+        return { start: formatDate(startDate), end: formatDate(today) }
     }
   }
 
@@ -275,13 +295,8 @@ export default function Pengeluaran() {
     const fetchTotal = async () => {
       try {
         setIsLoadingTotal(true)
-        const { start, end } = getDateRange(timeRange)
-        let total
-        if (!start || !end) {
-          total = await laporanService.getTotalPengeluaran()
-        } else {
-          total = await laporanService.getTotalPengeluaranByDateRange(start, end)
-        }
+        const total = await laporanService.getTotalPengeluaran()
+        console.log('Fetched Total Pengeluaran:', total)
         setTotalPengeluaran(Number.isFinite(total) ? total : 0)
       } catch (error) {
         console.error('Gagal mengambil total pengeluaran:', error)
@@ -292,7 +307,7 @@ export default function Pengeluaran() {
       }
     }
     fetchTotal()
-  }, [timeRange, confirmedStartDate, confirmedEndDate])
+  }, [])
 
   useEffect(() => {
     return () => {
@@ -317,7 +332,6 @@ export default function Pengeluaran() {
         tanggal: item.tanggal,
         nominal: item.nominal,
         keterangan: item.keterangan,
-        kategori: item.kategori,
         nota: item.nota
       }))
       setRows(pengeluaranData)
@@ -405,16 +419,11 @@ export default function Pengeluaran() {
         ...prev,
         [name]: numericValue
       }))
-    } else if (name === 'customCategory') {
-      setCustomCategory(value)
     } else {
       setFormData(prev => ({
         ...prev,
         [name]: value
       }))
-      if (name === 'kategori' && value !== 'Lainnya') {
-        setCustomCategory('') // Reset customCategory jika kategori bukan "Lainnya"
-      }
     }
   }
 
@@ -424,10 +433,8 @@ export default function Pengeluaran() {
       tanggal: '',
       nominal: '',
       keterangan: '',
-      kategori: '',
       nota: null
     })
-    setCustomCategory('') // Reset customCategory saat membuka form baru
     setPreviewUrl('')
     setShowModal(true)
   }
@@ -436,17 +443,14 @@ export default function Pengeluaran() {
     const [datePart, timePart] = row.tanggal.split(' ')
     const [day, month, year] = datePart.split('-')
     const localDateTime = `${year}-${month}-${day}T${timePart}`
-    
+
     setEditingId(row.id)
-    const isPredefinedCategory = predefinedCategories.includes(row.kategori)
     setFormData({
       tanggal: localDateTime,
       nominal: row.nominal.toString(),
       keterangan: row.keterangan,
-      kategori: isPredefinedCategory ? row.kategori : 'Lainnya',
       nota: null
     })
-    setCustomCategory(isPredefinedCategory ? '' : row.kategori) // Isi customCategory jika kategori bukan predefined
     if (row.nota) {
       setPreviewUrl(`${UPLOAD_URL}${row.nota}`)
     } else {
@@ -473,10 +477,7 @@ export default function Pengeluaran() {
       } else {
         await fetchData()
       }
-      const { start, end } = getDateRange(timeRange)
-      const total = !start || !end
-        ? await laporanService.getTotalPengeluaran()
-        : await laporanService.getTotalPengeluaranByDateRange(start, end)
+      const total = await laporanService.getTotalPengeluaran()
       setTotalPengeluaran(Number.isFinite(total) ? total : 0)
       showSnackbar(`Pengeluaran berhasil dihapus`, 'success')
     } catch (error) {
@@ -527,10 +528,6 @@ export default function Pengeluaran() {
       if (!formData.tanggal) throw new Error('Tanggal harus diisi')
       if (!formData.nominal) throw new Error('Nominal harus diisi')
       if (!formData.keterangan) throw new Error('Keterangan harus diisi')
-      if (!formData.kategori) throw new Error('Kategori harus diisi')
-      if (formData.kategori === 'Lainnya' && !customCategory.trim()) {
-        throw new Error('Kategori kustom harus diisi')
-      }
       if (!editingId && !formData.nota) throw new Error('Nota harus diupload')
 
       const dateObj = new Date(formData.tanggal)
@@ -543,12 +540,10 @@ export default function Pengeluaran() {
       const minutes = String(dateObj.getMinutes()).padStart(2, '0')
       const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}`
 
-      const finalCategory = formData.kategori === 'Lainnya' ? customCategory.trim() : formData.kategori
       const dataToSend = {
         tanggal: formattedDate,
         nominal: parseFloat(formData.nominal),
         keterangan: formData.keterangan.trim(),
-        kategori: finalCategory,
         nota: formData.nota
       }
 
@@ -563,10 +558,7 @@ export default function Pengeluaran() {
       showSnackbar(result.message, 'success')
       setShowModal(false)
       await fetchData()
-      const { start, end } = getDateRange(timeRange)
-      const total = !start || !end
-        ? await laporanService.getTotalPengeluaran()
-        : await laporanService.getTotalPengeluaranByDateRange(start, end)
+      const total = await laporanService.getTotalPengeluaran()
       setTotalPengeluaran(Number.isFinite(total) ? total : 0)
     } catch (error) {
       console.error('Error saving data:', error)
@@ -586,19 +578,6 @@ export default function Pengeluaran() {
     }).format(validAmount)
   }
 
-  const formatDateTime = (dateTimeString) => {
-    if (!dateTimeString) return '-'
-    try {
-      const [datePart, timePart] = dateTimeString.split(' ')
-      const [day, month, year] = datePart.split('-')
-      const [hours, minutes] = timePart.split(':')
-      return `${day}/${month}/${year} ${hours}:${minutes}`
-    } catch (e) {
-      console.error('Error formatting date:', e)
-      return dateTimeString
-    }
-  }
-
   const handleChangePage = (event, newPage) => {
     setPage(newPage)
   }
@@ -611,7 +590,6 @@ export default function Pengeluaran() {
   const handleClose = () => {
     setShowModal(false)
     setPreviewUrl('')
-    setCustomCategory('') // Reset customCategory saat menutup dialog
   }
 
   return (
@@ -726,7 +704,6 @@ export default function Pengeluaran() {
                   <TableRow>
                     <TableCell>No</TableCell>
                     <TableCell>Tanggal</TableCell>
-                    <TableCell>Kategori</TableCell>
                     <TableCell>Jumlah</TableCell>
                     <TableCell>Keterangan</TableCell>
                     <TableCell>Nota</TableCell>
@@ -736,13 +713,13 @@ export default function Pengeluaran() {
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
+                      <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
                         <CircularProgress />
                       </TableCell>
                     </TableRow>
                   ) : rows.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
+                      <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
                         <MoneyOffIcon sx={{ fontSize: 48, color: '#ccc', mb: 2 }} />
                         <Typography variant="body1" color="textSecondary">
                           Tidak ada data pengeluaran
@@ -761,7 +738,6 @@ export default function Pengeluaran() {
                       >
                         <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                         <TableCell>{formatDateTime(row.tanggal)}</TableCell>
-                        <TableCell>{row.kategori}</TableCell>
                         <TableCell sx={{ color: '#d32f2f', fontWeight: 600 }}>
                           {formatCurrency(row.nominal)}
                         </TableCell>
@@ -846,7 +822,6 @@ export default function Pengeluaran() {
           </CardContent>
         </StyledCard>
 
-        {/* Dialog untuk memilih rentang tanggal */}
         <Dialog
           open={showCustomCalendar}
           onClose={handleCancelDateRange}
@@ -910,91 +885,64 @@ export default function Pengeluaran() {
                   value={tempStartDate}
                   onChange={(newValue) => setTempStartDate(newValue)}
                   disableFuture
-                  sx={{
-                    flex: 1,
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: '10px',
-                      '&:hover fieldset': {
-                        borderColor: '#1a237e',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#1a237e',
-                        borderWidth: '2px',
-                      }
-                    },
-                    '& .MuiPickersDay-day': {
-                      borderRadius: '8px',
-                      '&.Mui-selected': {
-                        backgroundColor: '#1a237e',
-                        '&:hover': {
-                          backgroundColor: '#0d47a1'
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '10px',
+                          '&:hover fieldset': {
+                            borderColor: '#1a237e',
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#1a237e',
+                            borderWidth: '2px',
+                          }
                         }
-                      }
-                    },
-                    '& .MuiPickersCalendarHeader-label': {
-                      fontWeight: 600,
-                      color: '#1a237e'
-                    }
-                  }}
-                  slotProps={{
-                    textField: {
-                      variant: 'outlined',
-                      size: 'small',
-                      fullWidth: true
-                    }
-                  }}
+                      }}
+                    />
+                  )}
                 />
                 <DatePicker
                   label="Tanggal Akhir"
                   value={tempEndDate}
                   onChange={(newValue) => setTempEndDate(newValue)}
                   disableFuture
-                  sx={{
-                    flex: 1,
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: '10px',
-                      '&:hover fieldset': {
-                        borderColor: '#1a237e',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#1a237e',
-                        borderWidth: '2px',
-                      }
-                    },
-                    '& .MuiPickersDay-day': {
-                      borderRadius: '8px',
-                      '&.Mui-selected': {
-                        backgroundColor: '#1a237e',
-                        '&:hover': {
-                          backgroundColor: '#0d47a1'
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '10px',
+                          '&:hover fieldset': {
+                            borderColor: '#1a237e',
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#1a237e',
+                            borderWidth: '2px',
+                          }
                         }
-                      }
-                    },
-                    '& .MuiPickersCalendarHeader-label': {
-                      fontWeight: 600,
-                      color: '#1a237e'
-                    }
-                  }}
-                  slotProps={{
-                    textField: {
-                      variant: 'outlined',
-                      size: 'small',
-                      fullWidth: true
-                    }
-                  }}
+                      }}
+                    />
+                  )}
                 />
               </Box>
               {tempStartDate && tempEndDate && startOfDay(tempStartDate) > endOfDay(tempEndDate) && (
                 <Typography color="error" variant="caption" sx={{ mt: 1 }}>
                   Tanggal mulai harus sebelum tanggal akhir
                 </Typography>
-                
               )}
-               <Box sx={{ mt: 2 }}>
+              <Box sx={{ mt: 2 }}>
                 <Typography variant="body2" color="textSecondary">
-                 Pilih rentang tanggal untuk memfilter data pemasukan. Tanggal yang dipilih akan diterapkan setelah Anda menekan tombol "Terapkan".
+                  Pilih rentang tanggal untuk memfilter data pengeluaran. Tanggal yang dipilih akan diterapkan setelah Anda menekan tombol "Terapkan".
                 </Typography>
-               </Box>
+              </Box>
             </Box>
           </DialogContent>
           <DialogActions sx={{
@@ -1192,60 +1140,6 @@ export default function Pengeluaran() {
               }}
               placeholder="Contoh: 1.000.000"
             />
-
-            <TextField
-              label="Kategori"
-              name="kategori"
-              select
-              value={formData.kategori}
-              onChange={handleInputChange}
-              fullWidth
-              required
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '12px',
-                  '&:hover fieldset': {
-                    borderColor: '#1a237e',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#1a237e',
-                    borderWidth: '2px',
-                  }
-                }
-              }}
-              inputProps={{ 'aria-label': 'Kategori pengeluaran' }}
-            >
-              <MenuItem value="">Pilih Kategori</MenuItem>
-              <MenuItem value="Operasional">Operasional</MenuItem>
-              <MenuItem value="Pembangunan">Pembangunan</MenuItem>
-              <MenuItem value="Kesejahteraan">Kesejahteraan</MenuItem>
-              <MenuItem value="Lainnya">Lainnya</MenuItem>
-            </TextField>
-
-            {formData.kategori === 'Lainnya' && (
-              <TextField
-                label="Kategori Kustom"
-                name="customCategory"
-                value={customCategory}
-                onChange={handleInputChange}
-                fullWidth
-                required
-                placeholder="Masukkan kategori kustom"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: '12px',
-                    '&:hover fieldset': {
-                      borderColor: '#1a237e',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#1a237e',
-                      borderWidth: '2px',
-                    }
-                  }
-                }}
-                inputProps={{ 'aria-label': 'Kategori kustom pengeluaran' }}
-              />
-            )}
 
             <TextField
               label="Keterangan"

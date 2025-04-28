@@ -40,7 +40,9 @@ export const pemasukanService = {
                 headers: {
                     'Content-Type': 'application/json',
                     // 'Authorization': `Bearer ${token}`,
+                    'ngrok-skip-browser-warning': 'true'
                 },
+                credentials: 'include',
                 body: JSON.stringify(payload),
             });
 
@@ -84,7 +86,9 @@ export const pemasukanService = {
                 headers: {
                     'Content-Type': 'application/json',
                     // 'Authorization': `Bearer ${token}`,
+                    'ngrok-skip-browser-warning': 'true'
                 },
+                credentials: 'include',
                 body: JSON.stringify(payload),
             });
 
@@ -110,7 +114,7 @@ export const pemasukanService = {
      * @param {string} id - Record ID
      * @returns {Promise<Object>} Response data
      */
-    deletePemasukan: async (id) => {
+    async deletePemasukan(id) {
         try {
             // const token = Cookies.get('authToken');
             // if (!token) {
@@ -144,9 +148,11 @@ export const pemasukanService = {
 
     /**
      * Get all income records
-     * @returns {Promise<Array>} Array of income records
+     * @param {number} page - Page number
+     * @param {number} pageSize - Number of records per page
+     * @returns {Promise<Object>} Pagination response with income records
      */
-    getAllPemasukan: async (page, pageSize) => {
+    async getAllPemasukan(page, pageSize) {
         try {
             // const token = Cookies.get('authToken');
             // if (!token) {
@@ -175,11 +181,51 @@ export const pemasukanService = {
     },
 
     /**
+     * Get income records by date range
+     * @param {string} start - Start date in YYYY-MM-DD format
+     * @param {string} end - End date in YYYY-MM-DD format
+     * @param {number} page - Page number
+     * @param {number} pageSize - Number of records per page
+     * @returns {Promise<Object>} Pagination response with income records
+     */
+    async getPemasukanByDateRange(start, end, page, pageSize) {
+        try {
+            // const token = Cookies.get('authToken');
+            // if (!token) {
+            //     throw new Error('Token tidak ditemukan');
+            // }
+
+            if (!start || !end) {
+                throw new Error('Tanggal mulai dan akhir harus diisi');
+            }
+
+            const response = await fetch(`/api/pemasukan/getall?page=${page}&page_size=${pageSize}&start_date=${start}&end_date=${end}`, {
+                method: 'GET',
+                headers: {
+                    // ...getHeaders(token),
+                    'ngrok-skip-browser-warning': 'true'
+                },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Gagal mengambil data pemasukan berdasarkan rentang tanggal');
+            }
+
+            return await response.json(); // Kembalikan seluruh response termasuk metadata pagination
+        } catch (error) {
+            console.error('Error in getPemasukanByDateRange:', error);
+            throw error;
+        }
+    },
+
+    /**
      * Get income record by ID
      * @param {string} id - Record ID
      * @returns {Promise<Object>} Income record
      */
-    getPemasukanById: async (id) => {
+    async getPemasukanById(id) {
         try {
             // const token = Cookies.get('authToken');
             // if (!token) {
