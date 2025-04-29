@@ -67,8 +67,8 @@ export default function ArsipSurat() {
   const fetchArsip = async () => {
     try {
       const [resMasuk, resKeluar] = await Promise.all([
-        fetch(API_ENDPOINTS.SURAT_MASUK_GET_ALL, { headers: getHeaders() }),
-        fetch(API_ENDPOINTS.SURAT_KELUAR_GET_ALL, { headers: getHeaders() }),
+        fetch(API_ENDPOINTS.SEKRETARIS.SURAT_MASUK_GET_ALL, { headers: getHeaders() }),
+        fetch(API_ENDPOINTS.SEKRETARIS.SURAT_KELUAR_GET_ALL, { headers: getHeaders() }),
       ]);
 
       if (!resMasuk.ok || !resKeluar.ok) throw new Error('Gagal mengambil data arsip');
@@ -124,7 +124,7 @@ export default function ArsipSurat() {
 
   return (
     <ThemeProvider theme={theme}>
-      <Box sx={{ p: { xs: 2, sm: 3, md: 4 }, display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <Box sx={{ p: { xs: 2, sm: 3, md: 4 }, display: 'flex', flexDirection: 'column', gap: 3 }}>
         {/* Header */}
         <StyledCard>
           <ContentWrapper>

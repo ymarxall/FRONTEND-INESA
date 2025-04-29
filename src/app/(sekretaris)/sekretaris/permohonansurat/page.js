@@ -5,59 +5,73 @@ import {
   Paper, Button, Typography, Card, CardContent, IconButton,
   CircularProgress, TablePagination, Box, styled,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField,
-  Chip, MenuItem, Select, InputLabel, FormControl
+  Chip, MenuItem, Select, FormControl
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import PrintIcon from '@mui/icons-material/Print';
 import SaveIcon from '@mui/icons-material/Save';
 import { API_ENDPOINTS, getHeaders } from '@/config/api';
 import { useRouter } from 'next/navigation';
+import html2pdf from 'html2pdf.js';
 
 // Styled components
 const StyledCard = styled(Card)({
   backgroundColor: '#ffffff',
   borderRadius: '16px',
   boxShadow: '0 4px 20px 0 rgba(0,0,0,0.05)',
-  overflow: 'hidden',
-  minHeight: '400px',
+  overflow: 'hidden'
 });
 
 const HeaderBox = styled(Box)({
-  background: 'linear-gradient(135deg, #c62828 0%, #b71c1c 100%)',
+  background: 'linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%)',
   padding: '24px',
   color: 'white',
   borderRadius: '16px 16px 0 0',
   display: 'flex',
   justifyContent: 'space-between',
-  alignItems: 'center',
+  alignItems: 'center'
+});
+
+const AddButton = styled(Button)({
+  backgroundColor: '#ffffff',
+  color: '#2e7d32',
+  borderRadius: '12px',
+  textTransform: 'none',
+  fontWeight: 600,
+  padding: '12px 24px',
+  '&:hover': {
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    boxShadow: '0 8px 16px 0 rgba(0,0,0,0.1)',
+  },
 });
 
 // Status colors mapping
 const statusColors = {
-  'Pending': 'default',
   'Diproses': 'primary',
-  'Selesai': 'success'
+  'Selesai': 'success',
+  'Ditolak': 'error'
 };
 
-// Daftar opsi status untuk dropdown
-const statusOptions = [
-  { value: 'Pending', label: 'Pending' },
-  { value: 'Diproses', label: 'Diproses' },
-  { value: 'Selesai', label: 'Selesai' }
-];
+// Daftar opsi penandatangan, NIP, dan nama lengkap
+const penandatanganOptions = {
+  'Kepala Desa': { nip: '19651231 200001 1 001', namaLengkap: 'H. Muhammad Saleh, S.Sos' },
+  'Sekretaris Desa': { nip: '19701231 200112 2 002', namaLengkap: 'Dra. Hj. Sitti Rahma' }
+};
 
 // Fungsi untuk memformat tanggal ke format Indonesia (contoh: 20 Mei 1990)
 const formatTanggalIndonesia = (tanggal) => {
   if (!tanggal) return '...........................';
   const date = new Date(tanggal);
-  if (isNaN(date)) return '...........................';
+  if (isNaN(date.getTime())) return '...........................';
   const bulan = [
     'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
     'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
   ];
   return `${date.getDate()} ${bulan[date.getMonth()]} ${date.getFullYear()}`;
 };
+
+// Fungsi untuk menangani nilai null atau undefined
+const safeString = (value) => (value != null ? String(value) : '...........................');
 
 // Template Surat
 const suratTemplates = {
@@ -67,47 +81,65 @@ const suratTemplates = {
       const tanggalPembuatan = formatTanggalIndonesia(new Date());
       return `
         <div style="font-family: 'Times New Roman', serif; line-height: 1.5; max-width: 800px; margin: 0 auto; padding: 20px;">
-          <div style="display: flex; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px;">
-            <img src="/image.png" alt="Logo Desa" style="height: 80px; margin-right: 20px;" />
-            <div>
-              <h2 style="margin: 0;">PEMERINTAH DESA BONTO UJUNG</h2>
-              <h3 style="margin: 5px 0;">KECAMATAN TAROWANG - KABUPATEN JENEPONTO</h3>
-              <p style="margin: 0;">Jl. Poros Tarowang No. 10, Kode Pos 92351</p>
+          <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px;">
+            <div style="display: inline-flex; align-items: center;">
+              <img src="/image.png" alt="Logo Desa" style="height: 80px; margin-right: 20px;" />
+              <div>
+                <h2 style="margin: 0;">PEMERINTAH DESA BONTO UJUNG</h2>
+                <h3 style="margin: 5px 0;">KECAMATAN TAROWANG - KABUPATEN JENEPONTO</h3>
+                <p style="margin: 0;">Jl. Poros Tarowang No. 10, Kode Pos 92351</p>
+              </div>
             </div>
           </div>
 
           <div style="margin-bottom: 20px;">
-            <p style="text-align: right;">Bonto Ujung, ${tanggalPembuatan}</p>
-            <p>Nomor: ${data.no_surat || '.../PD-BU/VI/2023'}</p>
-            <p>Lampiran: ${data.dokumen_url ? 'Ada' : '-'}</p>
-            <p>Perihal: Keterangan Domisili</p>
+            <table style="width: 100%;">
+              <tr>
+                <td style="width: 100px;">Nomor</td>
+                <td style="width: 20px;">:</td>
+                <td>${safeString(data.no_surat)}</td>
+                <td style="text-align: right;">Bonto Ujung, ${tanggalPembuatan}</td>
+              </tr>
+              <tr>
+                <td>Lampiran</td>
+                <td>:</td>
+                <td>${data.dokumen_url ? 'Ada' : '-'}</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>Perihal</td>
+                <td>:</td>
+                <td>Keterangan Domisili</td>
+                <td></td>
+              </tr>
+            </table>
           </div>
 
           <div style="margin: 30px 0;">
             <p>Kepada Yth.</p>
-            <p>${data.tujuan || '...........................'}</p>
+            <p>${safeString(data.ditujukan)}</p>
             <p>di Tempat</p>
           </div>
 
           <div style="margin: 30px 0; text-align: justify;">
-            <p>Yang bertanda tangan di bawah ini Kepala Desa Bonto Ujung menerangkan bahwa:</p>
-            
+            <p>Yang bertanda tangan di bawah ini ${data.ttd_nama || 'Kepala Desa'} Bonto Ujung menerangkan bahwa:</p>
+            <br>
             <table style="margin-left: 40px; margin-bottom: 20px;">
               <tr>
                 <td>Nama</td>
-                <td>: ${data.nama_lengkap || '...........................'}</td>
+                <td>: ${safeString(data.nama_lengkap)}</td>
               </tr>
               <tr>
                 <td>NIK</td>
-                <td>: ${data.nik || '...........................'}</td>
+                <td>: ${safeString(data.nik)}</td>
               </tr>
               <tr>
                 <td>Tempat/Tgl Lahir</td>
-                <td>: ${data.tempat_lahir || '...........................'}/${data.tanggal_lahir ? formatTanggalIndonesia(data.tanggal_lahir) : '...........................'}</td>
+                <td>: ${safeString(data.tempat_lahir)}/${data.tanggal_lahir ? formatTanggalIndonesia(data.tanggal_lahir) : '...........................'}</td>
               </tr>
               <tr>
                 <td>Alamat</td>
-                <td>: ${data.alamat_lengkap || '...........................'}</td>
+                <td>: ${safeString(data.alamat_lengkap)}</td>
               </tr>
             </table>
 
@@ -121,10 +153,10 @@ const suratTemplates = {
           </div>
 
           <div style="margin-top: 60px; text-align: right;">
-            <p>Kepala Desa Bonto Ujung,</p>
+            <p>${data.ttd_nama || 'Kepala Desa'} Bonto Ujung,</p>
             <div style="margin-top: 80px;">
-              <p><strong><u>${data.ttd_nama || '...........................'}</u></strong></p>
-              <p>NIP. ${data.nip || '...........................'}</p>
+              <p><strong><u>${safeString(data.ttd_nama_lengkap)}</u></strong></p>
+              <p>NIP. ${safeString(data.nip)}</p>
             </div>
           </div>
         </div>
@@ -139,9 +171,9 @@ const suratTemplates = {
       { name: 'alamat_lengkap', label: 'Alamat Lengkap', type: 'text', placeholder: 'Masukkan Alamat Lengkap', disabled: true },
       { name: 'nomor_hp', label: 'Nomor HP', type: 'text', placeholder: 'Masukkan Nomor HP' },
       { name: 'dokumen_url', label: 'Lampiran Dokumen', type: 'file', accept: '.pdf,.jpg,.png' },
-      { name: 'tujuan', label: 'Tujuan Surat', type: 'text', placeholder: 'Masukkan Tujuan Surat' },
-      { name: 'ttd_nama', label: 'Nama Penandatangan', type: 'text', placeholder: 'Masukkan Nama Penandatangan' },
-      { name: 'nip', label: 'NIP', type: 'text', placeholder: 'Masukkan NIP' }
+      { name: 'ditujukan', label: 'Ditujukan Ke -', type: 'text', placeholder: 'Penerima Surat' },
+      { name: 'ttd_nama', label: 'Yang Bertandatangan', type: 'select', options: ['Kepala Desa', 'Sekretaris Desa'] },
+      { name: 'nip', label: 'NIP', type: 'text', placeholder: 'NIP akan terisi otomatis', disabled: true }
     ]
   },
   'Surat Keterangan Tidak Mampu': {
@@ -150,56 +182,74 @@ const suratTemplates = {
       const tanggalPembuatan = formatTanggalIndonesia(new Date());
       return `
         <div style="font-family: 'Times New Roman', serif; line-height: 1.5; max-width: 800px; margin: 0 auto; padding: 20px;">
-          <div style="display: flex; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px;">
-            <img src="/images/logo.png" alt="Logo Desa" style="height: 80px; margin-right: 20px;" />
-            <div>
-              <h2 style="margin: 0;">PEMERINTAH DESA BONTO UJUNG</h2>
-              <h3 style="margin: 5px 0;">KECAMATAN TAROWANG - KABUPATEN JENEPONTO</h3>
-              <p style="margin: 0;">Jl. Poros Tarowang No. 10, Kode Pos 92351</p>
+          <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px;">
+            <div style="display: inline-flex; align-items: center;">
+              <img src="/image.png" alt="Logo Desa" style="height: 80px; margin-right: 20px;" />
+              <div>
+                <h2 style="margin: 0;">PEMERINTAH DESA BONTO UJUNG</h2>
+                <h3 style="margin: 5px 0;">KECAMATAN TAROWANG - KABUPATEN JENEPONTO</h3>
+                <p style="margin: 0;">Jl. Poros Tarowang No. 10, Kode Pos 92351</p>
+              </div>
             </div>
           </div>
 
           <div style="margin-bottom: 20px;">
-            <p style="text-align: right;">Bonto Ujung, ${tanggalPembuatan}</p>
-            <p>Nomor: ${data.no_surat || '.../PD-BU/VI/2023'}</p>
-            <p>Lampiran: ${data.dokumen_url ? 'Ada' : '-'}</p>
-            <p>Perihal: Keterangan Tidak Mampu</p>
+            <table style="width: 100%;">
+              <tr>
+                <td style="width: 100px;">Nomor</td>
+                <td style="width: 20px;">:</td>
+                <td>${safeString(data.no_surat)}</td>
+                <td style="text-align: right;">Bonto Ujung, ${tanggalPembuatan}</td>
+              </tr>
+              <tr>
+                <td>Lampiran</td>
+                <td>:</td>
+                <td>${data.dokumen_url ? 'Ada' : '-'}</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>Perihal</td>
+                <td>:</td>
+                <td>Keterangan Tidak Mampu</td>
+                <td></td>
+              </tr>
+            </table>
           </div>
 
           <div style="margin: 30px 0;">
             <p>Kepada Yth.</p>
-            <p>${data.tujuan || '...........................'}</p>
+            <p>${safeString(data.ditujukan)}</p>
             <p>di Tempat</p>
           </div>
 
           <div style="margin: 30px 0; text-align: justify;">
-            <p>Yang bertanda tangan di bawah ini Kepala Desa Bonto Ujung menerangkan bahwa:</p>
-            
+            <p>Yang bertanda tangan di bawah ini ${data.ttd_nama || 'Kepala Desa'} Bonto Ujung menerangkan bahwa:</p>
+            <br>
             <table style="margin-left: 40px; margin-bottom: 20px;">
               <tr>
                 <td>Nama</td>
-                <td>: ${data.nama_lengkap || '...........................'}</td>
+                <td>: ${safeString(data.nama_lengkap)}</td>
               </tr>
               <tr>
                 <td>NIK</td>
-                <td>: ${data.nik || '...........................'}</td>
+                <td>: ${safeString(data.nik)}</td>
               </tr>
               <tr>
                 <td>Tempat/Tgl Lahir</td>
-                <td>: ${data.tempat_lahir || '...........................'}/${data.tanggal_lahir ? formatTanggalIndonesia(data.tanggal_lahir) : '...........................'}</td>
+                <td>: ${safeString(data.tempat_lahir)}/${data.tanggal_lahir ? formatTanggalIndonesia(data.tanggal_lahir) : '...........................'}</td>
               </tr>
               <tr>
                 <td>Pekerjaan</td>
-                <td>: ${data.pekerjaan || '...........................'}</td>
+                <td>: ${safeString(data.pekerjaan)}</td>
               </tr>
               <tr>
                 <td>Alamat</td>
-                <td>: ${data.alamat_lengkap || '...........................'}</td>
+                <td>: ${safeString(data.alamat_lengkap)}</td>
               </tr>
             </table>
 
             <p style="text-indent: 40px;">
-              Adalah benar warga Desa Bonto Ujung dan berdasarkan pengamatan termasuk dalam kategori tidak mampu untuk keperluan ${data.keperluan || '...........................'}.
+              Adalah benar warga Desa Bonto Ujung dan berdasarkan pengamatan termasuk dalam kategori tidak mampu untuk keperluan ${safeString(data.keperluan)}.
             </p>
 
             <p style="text-indent: 40px; margin-top: 20px;">
@@ -208,10 +258,10 @@ const suratTemplates = {
           </div>
 
           <div style="margin-top: 60px; text-align: right;">
-            <p>Kepala Desa Bonto Ujung,</p>
+            <p>${data.ttd_nama || 'Kepala Desa'} Bonto Ujung,</p>
             <div style="margin-top: 80px;">
-              <p><strong><u>${data.ttd_nama || '...........................'}</u></strong></p>
-              <p>NIP. ${data.nip || '...........................'}</p>
+              <p><strong><u>${safeString(data.ttd_nama_lengkap)}</u></strong></p>
+              <p>NIP. ${safeString(data.nip)}</p>
             </div>
           </div>
         </div>
@@ -228,9 +278,9 @@ const suratTemplates = {
       { name: 'keperluan', label: 'Keperluan', type: 'text', placeholder: 'Masukkan Keperluan' },
       { name: 'nomor_hp', label: 'Nomor HP', type: 'text', placeholder: 'Masukkan Nomor HP' },
       { name: 'dokumen_url', label: 'Lampiran Dokumen', type: 'file', accept: '.pdf,.jpg,.png' },
-      { name: 'tujuan', label: 'Tujuan Surat', type: 'text', placeholder: 'Masukkan Tujuan Surat' },
-      { name: 'ttd_nama', label: 'Nama Penandatangan', type: 'text', placeholder: 'Masukkan Nama Penandatangan' },
-      { name: 'nip', label: 'NIP', type: 'text', placeholder: 'Masukkan NIP' }
+      { name: 'ditujukan', label: 'Ditujukan Ke -', type: 'text', placeholder: 'Penerima Surat' },
+      { name: 'ttd_nama', label: 'Yang Bertandatangan', type: 'select', options: ['Kepala Desa', 'Sekretaris Desa'] },
+      { name: 'nip', label: 'NIP', type: 'text', placeholder: 'NIP akan terisi otomatis', disabled: true }
     ]
   },
   'Surat Keterangan Usaha': {
@@ -239,59 +289,77 @@ const suratTemplates = {
       const tanggalPembuatan = formatTanggalIndonesia(new Date());
       return `
         <div style="font-family: 'Times New Roman', serif; line-height: 1.5; max-width: 800px; margin: 0 auto; padding: 20px;">
-          <div style="display: flex; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px;">
-            <img src="/images/logo.png" alt="Logo Desa" style="height: 80px; margin-right: 20px;" />
-            <div>
-              <h2 style="margin: 0;">PEMERINTAH DESA BONTO UJUNG</h2>
-              <h3 style="margin: 5px 0;">KECAMATAN TAROWANG - KABUPATEN JENEPONTO</h3>
-              <p style="margin: 0;">Jl. Poros Tarowang No. 10, Kode Pos 92351</p>
+          <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px;">
+            <div style="display: inline-flex; align-items: center;">
+              <img src="/image.png" alt="Logo Desa" style="height: 80px; margin-right: 20px;" />
+              <div>
+                <h2 style="margin: 0;">PEMERINTAH DESA BONTO UJUNG</h2>
+                <h3 style="margin: 5px 0;">KECAMATAN TAROWANG - KABUPATEN JENEPONTO</h3>
+                <p style="margin: 0;">Jl. Poros Tarowang No. 10, Kode Pos 92351</p>
+              </div>
             </div>
           </div>
 
           <div style="margin-bottom: 20px;">
-            <p style="text-align: right;">Bonto Ujung, ${tanggalPembuatan}</p>
-            <p>Nomor: ${data.no_surat || '.../PD-BU/VI/2023'}</p>
-            <p>Lampiran: ${data.dokumen_url ? 'Ada' : '-'}</p>
-            <p>Perihal: Keterangan Usaha</p>
+            <table style="width: 100%;">
+              <tr>
+                <td style="width: 100px;">Nomor</td>
+                <td style="width: 20px;">:</td>
+                <td>${safeString(data.no_surat)}</td>
+                <td style="text-align: right;">Bonto Ujung, ${tanggalPembuatan}</td>
+              </tr>
+              <tr>
+                <td>Lampiran</td>
+                <td>:</td>
+                <td>${data.dokumen_url ? 'Ada' : '-'}</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>Perihal</td>
+                <td>:</td>
+                <td>Keterangan Usaha</td>
+                <td></td>
+              </tr>
+            </table>
           </div>
 
           <div style="margin: 30px 0;">
             <p>Kepada Yth.</p>
-            <p>${data.tujuan || '...........................'}</p>
+            <p>${safeString(data.ditujukan)}</p>
             <p>di Tempat</p>
           </div>
 
           <div style="margin: 30px 0; text-align: justify;">
-            <p>Yang bertanda tangan di bawah ini Kepala Desa Bonto Ujung menerangkan bahwa:</p>
-            
+            <p>Yang bertanda tangan di bawah ini ${data.ttd_nama || 'Kepala Desa'} Bonto Ujung menerangkan bahwa:</p>
+            <br>
             <table style="margin-left: 40px; margin-bottom: 20px;">
               <tr>
                 <td>Nama</td>
-                <td>: ${data.nama_lengkap || '...........................'}</td>
+                <td>: ${safeString(data.nama_lengkap)}</td>
               </tr>
               <tr>
                 <td>NIK</td>
-                <td>: ${data.nik || '...........................'}</td>
+                <td>: ${safeString(data.nik)}</td>
               </tr>
               <tr>
                 <td>Tempat/Tgl Lahir</td>
-                <td>: ${data.tempat_lahir || '...........................'}/${data.tanggal_lahir ? formatTanggalIndonesia(data.tanggal_lahir) : '...........................'}</td>
+                <td>: ${safeString(data.tempat_lahir)}/${data.tanggal_lahir ? formatTanggalIndonesia(data.tanggal_lahir) : '...........................'}</td>
               </tr>
               <tr>
                 <td>Alamat</td>
-                <td>: ${data.alamat_lengkap || '...........................'}</td>
+                <td>: ${safeString(data.alamat_lengkap)}</td>
               </tr>
               <tr>
                 <td>Nama Usaha</td>
-                <td>: ${data.nama_usaha || '...........................'}</td>
+                <td>: ${safeString(data.nama_usaha)}</td>
               </tr>
               <tr>
                 <td>Jenis Usaha</td>
-                <td>: ${data.jenis_usaha || '...........................'}</td>
+                <td>: ${safeString(data.jenis_usaha)}</td>
               </tr>
               <tr>
                 <td>Alamat Usaha</td>
-                <td>: ${data.alamat_usaha || '...........................'}</td>
+                <td>: ${safeString(data.alamat_usaha)}</td>
               </tr>
             </table>
 
@@ -305,10 +373,10 @@ const suratTemplates = {
           </div>
 
           <div style="margin-top: 60px; text-align: right;">
-            <p>Kepala Desa Bonto Ujung,</p>
+            <p>${data.ttd_nama || 'Kepala Desa'} Bonto Ujung,</p>
             <div style="margin-top: 80px;">
-              <p><strong><u>${data.ttd_nama || '...........................'}</u></strong></p>
-              <p>NIP. ${data.nip || '...........................'}</p>
+              <p><strong><u>${safeString(data.ttd_nama_lengkap)}</u></strong></p>
+              <p>NIP. ${safeString(data.nip)}</p>
             </div>
           </div>
         </div>
@@ -326,9 +394,9 @@ const suratTemplates = {
       { name: 'alamat_usaha', label: 'Alamat Usaha', type: 'text', placeholder: 'Masukkan Alamat Usaha' },
       { name: 'nomor_hp', label: 'Nomor HP', type: 'text', placeholder: 'Masukkan Nomor HP' },
       { name: 'dokumen_url', label: 'Lampiran Dokumen', type: 'file', accept: '.pdf,.jpg,.png' },
-      { name: 'tujuan', label: 'Tujuan Surat', type: 'text', placeholder: 'Masukkan Tujuan Surat' },
-      { name: 'ttd_nama', label: 'Nama Penandatangan', type: 'text', placeholder: 'Masukkan Nama Penandatangan' },
-      { name: 'nip', label: 'NIP', type: 'text', placeholder: 'Masukkan NIP' }
+      { name: 'ditujukan', label: 'Ditujukan Ke -', type: 'text', placeholder: 'Penerima Surat' },
+      { name: 'ttd_nama', label: 'Yang Bertandatangan', type: 'select', options: ['Kepala Desa', 'Sekretaris Desa'] },
+      { name: 'nip', label: 'NIP', type: 'text', placeholder: 'NIP akan terisi otomatis', disabled: true }
     ]
   },
   'Surat Keterangan Pindah': {
@@ -337,60 +405,78 @@ const suratTemplates = {
       const tanggalPembuatan = formatTanggalIndonesia(new Date());
       return `
         <div style="font-family: 'Times New Roman', serif; line-height: 1.5; max-width: 800px; margin: 0 auto; padding: 20px;">
-          <div style="display: flex; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px;">
-            <img src="/images/logo.png" alt="Logo Desa" style="height: 80px; margin-right: 20px;" />
-            <div>
-              <h2 style="margin: 0;">PEMERINTAH DESA BONTO UJUNG</h2>
-              <h3 style="margin: 5px 0;">KECAMATAN TAROWANG - KABUPATEN JENEPONTO</h3>
-              <p style="margin: 0;">Jl. Poros Tarowang No. 10, Kode Pos 92351</p>
+          <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px;">
+            <div style="display: inline-flex; align-items: center;">
+              <img src="/image.png" alt="Logo Desa" style="height: 80px; margin-right: 20px;" />
+              <div>
+                <h2 style="margin: 0;">PEMERINTAH DESA BONTO UJUNG</h2>
+                <h3 style="margin: 5px 0;">KECAMATAN TAROWANG - KABUPATEN JENEPONTO</h3>
+                <p style="margin: 0;">Jl. Poros Tarowang No. 10, Kode Pos 92351</p>
+              </div>
             </div>
           </div>
 
           <div style="margin-bottom: 20px;">
-            <p style="text-align: right;">Bonto Ujung, ${tanggalPembuatan}</p>
-            <p>Nomor: ${data.no_surat || '.../PD-BU/VI/2023'}</p>
-            <p>Lampiran: ${data.dokumen_url ? 'Ada' : '-'}</p>
-            <p>Perihal: Keterangan Pindah</p>
+            <table style="width: 100%;">
+              <tr>
+                <td style="width: 100px;">Nomor</td>
+                <td style="width: 20px;">:</td>
+                <td>${safeString(data.no_surat)}</td>
+                <td style="text-align: right;">Bonto Ujung, ${tanggalPembuatan}</td>
+              </tr>
+              <tr>
+                <td>Lampiran</td>
+                <td>:</td>
+                <td>${data.dokumen_url ? 'Ada' : '-'}</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>Perihal</td>
+                <td>:</td>
+                <td>Keterangan Pindah</td>
+                <td></td>
+              </tr>
+            </table>
           </div>
 
           <div style="margin: 30px 0;">
             <p>Kepada Yth.</p>
-            <p>${data.tujuan || '...........................'}</p>
+            <p>${safeString(data.ditujukan)}</p>
             <p>di Tempat</p>
           </div>
 
           <div style="margin: 30px 0; text-align: justify;">
-            <p>Yang bertanda tangan di bawah ini Kepala Desa Bonto Ujung menerangkan bahwa:</p>
-            
+            <p>Yang bertanda tangan di bawah ini ${data.ttd_nama || 'Kepala Desa'} Bonto Ujung menerangkan bahwa:</p>
+            <br>
             <table style="margin-left: 40px; margin-bottom: 20px;">
               <tr>
                 <td>Nama</td>
-                <td>: ${data.nama_lengkap || '...........................'}</td>
+                <td>: ${safeString(data.nama_lengkap)}</td>
               </tr>
               <tr>
                 <td>NIK</td>
-                <td>: ${data.nik || '...........................'}</td>
+                <td>: ${safeString(data.nik)}</td>
               </tr>
               <tr>
                 <td>Tempat/Tgl Lahir</td>
-                <td>: ${data.tempat_lahir || '...........................'}/${data.tanggal_lahir ? formatTanggalIndonesia(data.tanggal_lahir) : '...........................'}</td>
+                <td>: ${safeString(data.tempat_lahir)}/${data.tanggal_lahir ? formatTanggalIndonesia(data.tanggal_lahir) : '...........................'}</td>
               </tr>
               <tr>
                 <td>Alamat Asal</td>
-                <td>: ${data.alamat_lengkap || '...........................'}</td>
+                <td>: ${safeString(data.alamat_lengkap)}</td>
               </tr>
               <tr>
                 <td>Alamat Tujuan</td>
-                <td>: ${data.alamat_tujuan || '...........................'}</td>
+                <td>: ${safeString(data.alamat_tujuan)}</td>
               </tr>
               <tr>
                 <td>Alasan Pindah</td>
-                <td>: ${data.alasan_pindah || '...........................'}</td>
+                <td>: ${safeString(data.alasan_pindah)}</td>
               </tr>
             </table>
 
             <p style="text-indent: 40px;">
-              Adalah benar warga Desa Bonto Ujung yang akan pindah ke alamat tujuan tersebut di atas untuk keperluan ${data.keperluan || '...........................'}.
+              Adalah benar warga Desa Bonto Ujung yang akan pindah ke alamat tujuan tersebut di atas untuk keperluan ${safeString(data.keperluan)}.
             </p>
 
             <p style="text-indent: 40px; margin-top: 20px;">
@@ -399,10 +485,10 @@ const suratTemplates = {
           </div>
 
           <div style="margin-top: 60px; text-align: right;">
-            <p>Kepala Desa Bonto Ujung,</p>
+            <p>${data.ttd_nama || 'Kepala Desa'} Bonto Ujung,</p>
             <div style="margin-top: 80px;">
-              <p><strong><u>${data.ttd_nama || '...........................'}</u></strong></p>
-              <p>NIP. ${data.nip || '...........................'}</p>
+              <p><strong><u>${safeString(data.ttd_nama_lengkap)}</u></strong></p>
+              <p>NIP. ${safeString(data.nip)}</p>
             </div>
           </div>
         </div>
@@ -420,9 +506,9 @@ const suratTemplates = {
       { name: 'keperluan', label: 'Keperluan', type: 'text', placeholder: 'Masukkan Keperluan' },
       { name: 'nomor_hp', label: 'Nomor HP', type: 'text', placeholder: 'Masukkan Nomor HP' },
       { name: 'dokumen_url', label: 'Lampiran Dokumen', type: 'file', accept: '.pdf,.jpg,.png' },
-      { name: 'tujuan', label: 'Tujuan Surat', type: 'text', placeholder: 'Masukkan Tujuan Surat' },
-      { name: 'ttd_nama', label: 'Nama Penandatangan', type: 'text', placeholder: 'Masukkan Nama Penandatangan' },
-      { name: 'nip', label: 'NIP', type: 'text', placeholder: 'Masukkan NIP' }
+      { name: 'ditujukan', label: 'Ditujukan Ke -', type: 'text', placeholder: 'Penerima Surat' },
+      { name: 'ttd_nama', label: 'Yang Bertandatangan', type: 'select', options: ['Kepala Desa', 'Sekretaris Desa'] },
+      { name: 'nip', label: 'NIP', type: 'text', placeholder: 'NIP akan terisi otomatis', disabled: true }
     ]
   },
   'Surat Pengantar': {
@@ -431,45 +517,57 @@ const suratTemplates = {
       const tanggalPembuatan = formatTanggalIndonesia(new Date());
       return `
         <div style="font-family: 'Times New Roman', serif; line-height: 1.5; max-width: 800px; margin: 0 auto; padding: 20px;">
-          <div style="display: flex; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px;">
-            <img src="/images/logo.png" alt="Logo Desa" style="height: 80px; margin-right: 20px;" />
-            <div>
-              <h2 style="margin: 0;">PEMERINTAH DESA BONTO UJUNG</h2>
-              <h3 style="margin: 5px 0;">KECAMATAN TAROWANG - KABUPATEN JENEPONTO</h3>
-              <p style="margin: 0;">Jl. Poros Tarowang No. 10, Kode Pos 92351</p>
+          <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px;">
+            <div style="display: inline-flex; align-items: center;">
+              <img src="/image.png" alt="Logo Desa" style="height: 80px; margin-right: 20px;" />
+              <div>
+                <h2 style="margin: 0;">PEMERINTAH DESA BONTO UJUNG</h2>
+                <h3 style="margin: 5px 0;">KECAMATAN TAROWANG - KABUPATEN JENEPONTO</h3>
+                <p style="margin: 0;">Jl. Poros Tarowang No. 10, Kode Pos 92351</p>
+              </div>
             </div>
           </div>
 
-          <div style="margin-bottom: 20px;">
-            <p style="text-align: center; font-weight: bold; font-size: 18px;">SURAT PENGANTAR</p>
-            <p style="text-align: center;">Nomor: ${data.no_surat || '.../PD-BU/VI/2023'}</p>
-            <p style="text-align: center;">Lampiran: ${data.dokumen_url ? 'Ada' : '-'}</p>
+          <div style="margin-bottom: 20px; text-align: center;">
+            <p style="font-weight: bold; font-size: 18px;">SURAT PENGANTAR</p>
+            <table style="width: 100%;">
+              <tr>
+                <td style="width: 100px;">Nomor</td>
+                <td style="width: 20px;">:</td>
+                <td>${safeString(data.no_surat)}</td>
+              </tr>
+              <tr>
+                <td>Lampiran</td>
+                <td>:</td>
+                <td>${data.dokumen_url ? 'Ada' : '-'}</td>
+              </tr>
+            </table>
           </div>
 
           <div style="margin: 30px 0; text-align: justify;">
-            <p>Yang bertanda tangan di bawah ini Kepala Desa Bonto Ujung menerangkan bahwa:</p>
-            
+            <p>Yang bertanda tangan di bawah ini ${data.ttd_nama || 'Kepala Desa'} Bonto Ujung menerangkan bahwa:</p>
+            <br>
             <table style="margin-left: 40px; margin-bottom: 20px;">
               <tr>
                 <td>Nama</td>
-                <td>: ${data.nama_lengkap || '...........................'}</td>
+                <td>: ${safeString(data.nama_lengkap)}</td>
               </tr>
               <tr>
                 <td>NIK</td>
-                <td>: ${data.nik || '...........................'}</td>
+                <td>: ${safeString(data.nik)}</td>
               </tr>
               <tr>
                 <td>Tempat/Tgl Lahir</td>
-                <td>: ${data.tempat_lahir || '...........................'}/${data.tanggal_lahir ? formatTanggalIndonesia(data.tanggal_lahir) : '...........................'}</td>
+                <td>: ${safeString(data.tempat_lahir)}/${data.tanggal_lahir ? formatTanggalIndonesia(data.tanggal_lahir) : '...........................'}</td>
               </tr>
               <tr>
                 <td>Alamat</td>
-                <td>: ${data.alamat_lengkap || '...........................'}</td>
+                <td>: ${safeString(data.alamat_lengkap)}</td>
               </tr>
             </table>
 
             <p style="text-indent: 40px;">
-              Adalah benar warga Desa Bonto Ujung dan memerlukan surat pengantar ini untuk keperluan ${data.keperluan || '...........................'}.
+              Adalah benar warga Desa Bonto Ujung dan memerlukan surat pengantar ini untuk keperluan ${safeString(data.keperluan)}.
             </p>
 
             <p style="text-indent: 40px; margin-top: 20px;">
@@ -479,10 +577,10 @@ const suratTemplates = {
 
           <div style="margin-top: 60px; text-align: right;">
             <p>Bonto Ujung, ${tanggalPembuatan}</p>
-            <p>Kepala Desa Bonto Ujung,</p>
+            <p>${data.ttd_nama || 'Kepala Desa'} Bonto Ujung,</p>
             <div style="margin-top: 80px;">
-              <p><strong><u>${data.ttd_nama || '...........................'}</u></strong></p>
-              <p>NIP. ${data.nip || '...........................'}</p>
+              <p><strong><u>${safeString(data.ttd_nama_lengkap)}</u></strong></p>
+              <p>NIP. ${safeString(data.nip)}</p>
             </div>
           </div>
         </div>
@@ -498,9 +596,9 @@ const suratTemplates = {
       { name: 'keperluan', label: 'Keperluan', type: 'text', placeholder: 'Masukkan Keperluan' },
       { name: 'nomor_hp', label: 'Nomor HP', type: 'text', placeholder: 'Masukkan Nomor HP' },
       { name: 'dokumen_url', label: 'Lampiran Dokumen', type: 'file', accept: '.pdf,.jpg,.png' },
-      { name: 'tujuan', label: 'Tujuan Surat', type: 'text', placeholder: 'Masukkan Tujuan Surat' },
-      { name: 'ttd_nama', label: 'Nama Penandatangan', type: 'text', placeholder: 'Masukkan Nama Penandatangan' },
-      { name: 'nip', label: 'NIP', type: 'text', placeholder: 'Masukkan NIP' }
+      { name: 'ditujukan', label: 'Ditujukan Ke -', type: 'text', placeholder: 'Penerima Surat' },
+      { name: 'ttd_nama', label: 'Yang Bertandatangan', type: 'select', options: ['Kepala Desa', 'Sekretaris Desa'] },
+      { name: 'nip', label: 'NIP', type: 'text', placeholder: 'NIP akan terisi otomatis', disabled: true }
     ]
   },
   'Surat Keterangan Kelahiran': {
@@ -509,55 +607,73 @@ const suratTemplates = {
       const tanggalPembuatan = formatTanggalIndonesia(new Date());
       return `
         <div style="font-family: 'Times New Roman', serif; line-height: 1.5; max-width: 800px; margin: 0 auto; padding: 20px;">
-          <div style="display: flex; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px;">
-            <img src="/images/logo.png" alt="Logo Desa" style="height: 80px; margin-right: 20px;" />
-            <div>
-              <h2 style="margin: 0;">PEMERINTAH DESA BONTO UJUNG</h2>
-              <h3 style="margin: 5px 0;">KECAMATAN TAROWANG - KABUPATEN JENEPONTO</h3>
-              <p style="margin: 0;">Jl. Poros Tarowang No. 10, Kode Pos 92351</p>
+          <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px;">
+            <div style="display: inline-flex; align-items: center;">
+              <img src="/image.png" alt="Logo Desa" style="height: 80px; margin-right: 20px;" />
+              <div>
+                <h2 style="margin: 0;">PEMERINTAH DESA BONTO UJUNG</h2>
+                <h3 style="margin: 5px 0;">KECAMATAN TAROWANG - KABUPATEN JENEPONTO</h3>
+                <p style="margin: 0;">Jl. Poros Tarowang No. 10, Kode Pos 92351</p>
+              </div>
             </div>
           </div>
 
           <div style="margin-bottom: 20px;">
-            <p style="text-align: right;">Bonto Ujung, ${tanggalPembuatan}</p>
-            <p>Nomor: ${data.no_surat || '.../PD-BU/VI/2023'}</p>
-            <p>Lampiran: ${data.dokumen_url ? 'Ada' : '-'}</p>
-            <p>Perihal: Keterangan Kelahiran</p>
+            <table style="width: 100%;">
+              <tr>
+                <td style="width: 100px;">Nomor</td>
+                <td style="width: 20px;">:</td>
+                <td>${safeString(data.no_surat)}</td>
+                <td style="text-align: right;">Bonto Ujung, ${tanggalPembuatan}</td>
+              </tr>
+              <tr>
+                <td>Lampiran</td>
+                <td>:</td>
+                <td>${data.dokumen_url ? 'Ada' : '-'}</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>Perihal</td>
+                <td>:</td>
+                <td>Keterangan Kelahiran</td>
+                <td></td>
+              </tr>
+            </table>
           </div>
 
           <div style="margin: 30px 0;">
             <p>Kepada Yth.</p>
-            <p>${data.tujuan || '...........................'}</p>
+            <p>${safeString(data.ditujukan)}</p>
             <p>di Tempat</p>
           </div>
 
           <div style="margin: 30px 0; text-align: justify;">
-            <p>Yang bertanda tangan di bawah ini Kepala Desa Bonto Ujung menerangkan bahwa:</p>
-            
+            <p>Yang bertanda tangan di bawah ini ${data.ttd_nama || 'Kepala Desa'} Bonto Ujung menerangkan bahwa:</p>
+            <br>
             <table style="margin-left: 40px; margin-bottom: 20px;">
               <tr>
                 <td>Nama Anak</td>
-                <td>: ${data.nama_lengkap || '...........................'}</td>
+                <td>: ${safeString(data.nama_lengkap)}</td>
               </tr>
               <tr>
                 <td>Jenis Kelamin</td>
-                <td>: ${data.jenis_kelamin || '...........................'}</td>
+                <td>: ${safeString(data.jenis_kelamin)}</td>
               </tr>
               <tr>
                 <td>Tempat/Tgl Lahir</td>
-                <td>: ${data.tempat_lahir || '...........................'}/${data.tanggal_lahir ? formatTanggalIndonesia(data.tanggal_lahir) : '...........................'}</td>
+                <td>: ${safeString(data.tempat_lahir)}/${data.tanggal_lahir ? formatTanggalIndonesia(data.tanggal_lahir) : '...........................'}</td>
               </tr>
               <tr>
                 <td>Nama Ayah</td>
-                <td>: ${data.nama_ayah || '...........................'}</td>
+                <td>: ${safeString(data.nama_ayah)}</td>
               </tr>
               <tr>
                 <td>Nama Ibu</td>
-                <td>: ${data.nama_ibu || '...........................'}</td>
+                <td>: ${safeString(data.nama_ibu)}</td>
               </tr>
               <tr>
                 <td>Alamat Orang Tua</td>
-                <td>: ${data.alamat_lengkap || '...........................'}</td>
+                <td>: ${safeString(data.alamat_lengkap)}</td>
               </tr>
             </table>
 
@@ -571,10 +687,10 @@ const suratTemplates = {
           </div>
 
           <div style="margin-top: 60px; text-align: right;">
-            <p>Kepala Desa Bonto Ujung,</p>
+            <p>${data.ttd_nama || 'Kepala Desa'} Bonto Ujung,</p>
             <div style="margin-top: 80px;">
-              <p><strong><u>${data.ttd_nama || '...........................'}</u></strong></p>
-              <p>NIP. ${data.nip || '...........................'}</p>
+              <p><strong><u>${safeString(data.ttd_nama_lengkap)}</u></strong></p>
+              <p>NIP. ${safeString(data.nip)}</p>
             </div>
           </div>
         </div>
@@ -591,9 +707,9 @@ const suratTemplates = {
       { name: 'alamat_lengkap', label: 'Alamat Orang Tua', type: 'text', placeholder: 'Masukkan Alamat Orang Tua', disabled: true },
       { name: 'nomor_hp', label: 'Nomor HP', type: 'text', placeholder: 'Masukkan Nomor HP' },
       { name: 'dokumen_url', label: 'Lampiran Dokumen', type: 'file', accept: '.pdf,.jpg,.png' },
-      { name: 'tujuan', label: 'Tujuan Surat', type: 'text', placeholder: 'Masukkan Tujuan Surat' },
-      { name: 'ttd_nama', label: 'Nama Penandatangan', type: 'text', placeholder: 'Masukkan Nama Penandatangan' },
-      { name: 'nip', label: 'NIP', type: 'text', placeholder: 'Masukkan NIP' }
+      { name: 'ditujukan', label: 'Ditujukan Ke -', type: 'text', placeholder: 'Penerima Surat' },
+      { name: 'ttd_nama', label: 'Yang Bertandatangan', type: 'select', options: ['Kepala Desa', 'Sekretaris Desa'] },
+      { name: 'nip', label: 'NIP', type: 'text', placeholder: 'NIP akan terisi otomatis', disabled: true }
     ]
   },
   'Surat Keterangan Kematian': {
@@ -602,47 +718,65 @@ const suratTemplates = {
       const tanggalPembuatan = formatTanggalIndonesia(new Date());
       return `
         <div style="font-family: 'Times New Roman', serif; line-height: 1.5; max-width: 800px; margin: 0 auto; padding: 20px;">
-          <div style="display: flex; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px;">
-            <img src="/images/logo.png" alt="Logo Desa" style="height: 80px; margin-right: 20px;" />
-            <div>
-              <h2 style="margin: 0;">PEMERINTAH DESA BONTO UJUNG</h2>
-              <h3 style="margin: 5px 0;">KECAMATAN TAROWANG - KABUPATEN JENEPONTO</h3>
-              <p style="margin: 0;">Jl. Poros Tarowang No. 10, Kode Pos 92351</p>
+          <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px;">
+            <div style="display: inline-flex; align-items: center;">
+              <img src="/image.png" alt="Logo Desa" style="height: 80px; margin-right: 20px;" />
+              <div>
+                <h2 style="margin: 0;">PEMERINTAH DESA BONTO UJUNG</h2>
+                <h3 style="margin: 5px 0;">KECAMATAN TAROWANG - KABUPATEN JENEPONTO</h3>
+                <p style="margin: 0;">Jl. Poros Tarowang No. 10, Kode Pos 92351</p>
+              </div>
             </div>
           </div>
 
           <div style="margin-bottom: 20px;">
-            <p style="text-align: right;">Bonto Ujung, ${tanggalPembuatan}</p>
-            <p>Nomor: ${data.no_surat || '.../PD-BU/VI/2023'}</p>
-            <p>Lampiran: ${data.dokumen_url ? 'Ada' : '-'}</p>
-            <p>Perihal: Keterangan Kematian</p>
+            <table style="width: 100%;">
+              <tr>
+                <td style="width: 100px;">Nomor</td>
+                <td style="width: 20px;">:</td>
+                <td>${safeString(data.no_surat)}</td>
+                <td style="text-align: right;">Bonto Ujung, ${tanggalPembuatan}</td>
+              </tr>
+              <tr>
+                <td>Lampiran</td>
+                <td>:</td>
+                <td>${data.dokumen_url ? 'Ada' : '-'}</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>Perihal</td>
+                <td>:</td>
+                <td>Keterangan Kematian</td>
+                <td></td>
+              </tr>
+            </table>
           </div>
 
           <div style="margin: 30px 0;">
             <p>Kepada Yth.</p>
-            <p>${data.tujuan || '...........................'}</p>
+            <p>${safeString(data.ditujukan)}</p>
             <p>di Tempat</p>
           </div>
 
           <div style="margin: 30px 0; text-align: justify;">
-            <p>Yang bertanda tangan di bawah ini Kepala Desa Bonto Ujung menerangkan bahwa:</p>
-            
+            <p>Yang bertanda tangan di bawah ini ${data.ttd_nama || 'Kepala Desa'} Bonto Ujung menerangkan bahwa:</p>
+            <br>
             <table style="margin-left: 40px; margin-bottom: 20px;">
               <tr>
                 <td>Nama</td>
-                <td>: ${data.nama_lengkap || '...........................'}</td>
+                <td>: ${safeString(data.nama_lengkap)}</td>
               </tr>
               <tr>
                 <td>NIK</td>
-                <td>: ${data.nik || '...........................'}</td>
+                <td>: ${safeString(data.nik)}</td>
               </tr>
               <tr>
                 <td>Tempat/Tgl Lahir</td>
-                <td>: ${data.tempat_lahir || '...........................'}/${data.tanggal_lahir ? formatTanggalIndonesia(data.tanggal_lahir) : '...........................'}</td>
+                <td>: ${safeString(data.tempat_lahir)}/${data.tanggal_lahir ? formatTanggalIndonesia(data.tanggal_lahir) : '...........................'}</td>
               </tr>
               <tr>
                 <td>Alamat</td>
-                <td>: ${data.alamat_lengkap || '...........................'}</td>
+                <td>: ${safeString(data.alamat_lengkap)}</td>
               </tr>
               <tr>
                 <td>Tanggal Kematian</td>
@@ -650,7 +784,7 @@ const suratTemplates = {
               </tr>
               <tr>
                 <td>Penyebab Kematian</td>
-                <td>: ${data.penyebab_kematian || '...........................'}</td>
+                <td>: ${safeString(data.penyebab_kematian)}</td>
               </tr>
             </table>
 
@@ -664,10 +798,10 @@ const suratTemplates = {
           </div>
 
           <div style="margin-top: 60px; text-align: right;">
-            <p>Kepala Desa Bonto Ujung,</p>
+            <p>${data.ttd_nama || 'Kepala Desa'} Bonto Ujung,</p>
             <div style="margin-top: 80px;">
-              <p><strong><u>${data.ttd_nama || '...........................'}</u></strong></p>
-              <p>NIP. ${data.nip || '...........................'}</p>
+              <p><strong><u>${safeString(data.ttd_nama_lengkap)}</u></strong></p>
+              <p>NIP. ${safeString(data.nip)}</p>
             </div>
           </div>
         </div>
@@ -684,9 +818,9 @@ const suratTemplates = {
       { name: 'penyebab_kematian', label: 'Penyebab Kematian', type: 'text', placeholder: 'Masukkan Penyebab Kematian' },
       { name: 'nomor_hp', label: 'Nomor HP', type: 'text', placeholder: 'Masukkan Nomor HP' },
       { name: 'dokumen_url', label: 'Lampiran Dokumen', type: 'file', accept: '.pdf,.jpg,.png' },
-      { name: 'tujuan', label: 'Tujuan Surat', type: 'text', placeholder: 'Masukkan Tujuan Surat' },
-      { name: 'ttd_nama', label: 'Nama Penandatangan', type: 'text', placeholder: 'Masukkan Nama Penandatangan' },
-      { name: 'nip', label: 'NIP', type: 'text', placeholder: 'Masukkan NIP' }
+      { name: 'ditujukan', label: 'Ditujukan Ke -', type: 'text', placeholder: 'Penerima Surat' },
+      { name: 'ttd_nama', label: 'Yang Bertandatangan', type: 'select', options: ['Kepala Desa', 'Sekretaris Desa'] },
+      { name: 'nip', label: 'NIP', type: 'text', placeholder: 'NIP akan terisi otomatis', disabled: true }
     ]
   }
 };
@@ -702,11 +836,12 @@ export default function PermohonanSurat() {
   const [previewContent, setPreviewContent] = useState('');
   const router = useRouter();
 
+  // Fetch daftar permohonan saat komponen dimuat
   useEffect(() => {
     const fetchPermohonan = async () => {
       setLoading(true);
       try {
-        const response = await fetch(API_ENDPOINTS.PERMOHONAN_SURAT_GET_ALL, {
+        const response = await fetch(API_ENDPOINTS.SEKRETARIS.PERMOHONAN_SURAT_GET_ALL, {
           method: 'GET',
           headers: getHeaders(),
         });
@@ -722,7 +857,9 @@ export default function PermohonanSurat() {
     fetchPermohonan();
   }, []);
 
+  // Buka form untuk memproses permohonan
   const handleOpenForm = (permohonan) => {
+    console.log('Data permohonan:', permohonan); // Debugging
     setSelectedPermohonan(permohonan);
     const template = suratTemplates[permohonan.jenis_surat];
     if (!template) {
@@ -730,44 +867,52 @@ export default function PermohonanSurat() {
       return;
     }
 
-    // Format tanggal_lahir ke YYYY-MM-DD untuk input type="date"
-    const tanggalLahir = permohonan.tanggal_lahir
-      ? new Date(permohonan.tanggal_lahir).toISOString().split('T')[0]
-      : '';
-    const tglKematian = permohonan.tgl_kematian
-      ? new Date(permohonan.tgl_kematian).toISOString().split('T')[0]
-      : '';
+    // Format tanggal untuk input date (YYYY-MM-DD)
+    const formatDateSafely = (dateValue) => {
+      if (!dateValue) return '';
+      const date = new Date(dateValue);
+      if (isNaN(date.getTime())) return '';
+      return date.toISOString().split('T')[0];
+    };
 
-    setFormData({
-      nama_lengkap: permohonan.nama_lengkap || '',
-      nik: permohonan.nik || '',
-      alamat_lengkap: permohonan.alamat_lengkap || '',
-      jenis_surat: permohonan.jenis_surat || '',
-      keterangan: permohonan.keterangan || '',
-      status: permohonan.status || 'Pending',
-      tempat_lahir: permohonan.tempat_lahir || '',
-      tanggal_lahir: tanggalLahir, // Pastikan format YYYY-MM-DD untuk input date
-      dokumen_url: permohonan.dokumen_url || '',
+    // Konversi null/undefined ke string kosong
+    const safeFormString = (value) => (value != null ? String(value) : '');
+
+    const formData = {
+      nama_lengkap: safeFormString(permohonan.nama_lengkap),
+      nik: safeFormString(permohonan.nik),
+      alamat_lengkap: safeFormString(permohonan.alamat_lengkap),
+      jenis_surat: safeFormString(permohonan.jenis_surat),
+      keterangan: safeFormString(permohonan.keterangan),
+      status: safeFormString(permohonan.status) || 'Diproses',
+      tempat_lahir: safeFormString(permohonan.tempat_lahir),
+      tanggal_lahir: formatDateSafely(permohonan.tanggal_lahir),
+      dokumen_url: safeFormString(permohonan.dokumen_url),
       no_surat: '',
-      tujuan: '',
+      ditujukan: safeFormString(permohonan.ditujukan),
       ttd_nama: '',
+      ttd_nama_lengkap: '', // Inisialisasi untuk nama lengkap penandatangan
       nip: '',
-      pekerjaan: permohonan.pekerjaan || '',
-      keperluan: permohonan.keperluan || '',
-      nama_usaha: permohonan.nama_usaha || '',
-      jenis_usaha: permohonan.jenis_usaha || '',
-      alamat_usaha: permohonan.alamat_usaha || '',
-      alamat_tujuan: permohonan.alamat_tujuan || '',
-      alasan_pindah: permohonan.alasan_pindah || '',
-      jenis_kelamin: permohonan.jenis_kelamin || '',
-      nama_ayah: permohonan.nama_ayah || '',
-      nama_ibu: permohonan.nama_ibu || '',
-      tgl_kematian: tglKematian, // Format untuk input date
-      penyebab_kematian: permohonan.penyebab_kematian || '',
-      nomor_hp: permohonan.nomor_hp || ''
-    });
+      pekerjaan: safeFormString(permohonan.pekerjaan),
+      keperluan: safeFormString(permohonan.keperluan),
+      nama_usaha: safeFormString(permohonan.nama_usaha),
+      jenis_usaha: safeFormString(permohonan.jenis_usaha),
+      alamat_usaha: safeFormString(permohonan.alamat_usaha),
+      alamat_tujuan: safeFormString(permohonan.alamat_tujuan),
+      alasan_pindah: safeFormString(permohonan.alasan_pindah),
+      jenis_kelamin: safeFormString(permohonan.jenis_kelamin),
+      nama_ayah: safeFormString(permohonan.nama_ayah),
+      nama_ibu: safeFormString(permohonan.nama_ibu),
+      tgl_kematian: formatDateSafely(permohonan.tgl_kematian),
+      penyebab_kematian: safeFormString(permohonan.penyebab_kematian),
+      nomor_hp: safeFormString(permohonan.nomor_hp),
+    };
+
+    console.log('Form data:', formData); // Debugging
+    setFormData(formData);
   };
 
+  // Tutup form
   const handleCloseForm = () => {
     setSelectedPermohonan(null);
     setFormData({});
@@ -775,11 +920,21 @@ export default function PermohonanSurat() {
     setError(null);
   };
 
+  // Tangani perubahan input
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    let updatedFormData = { ...formData, [name]: value };
+
+    // Jika ttd_nama berubah, perbarui nip dan ttd_nama_lengkap secara otomatis
+    if (name === 'ttd_nama') {
+      updatedFormData.nip = penandatanganOptions[value]?.nip || '';
+      updatedFormData.ttd_nama_lengkap = penandatanganOptions[value]?.namaLengkap || '';
+    }
+
+    setFormData(updatedFormData);
   };
 
+  // Tangani upload file
   const handleFileChange = (e) => {
     const { name, files } = e.target;
     if (files && files[0]) {
@@ -787,32 +942,7 @@ export default function PermohonanSurat() {
     }
   };
 
-  const handleUpdateStatus = async (id, newStatus) => {
-    try {
-        setLoading(true);
-        const response = await fetch(`${API_ENDPOINTS.PERMOHONAN_SURAT_UPDATE_STATUS}/${id}`, {
-            method: 'PATCH',
-            headers: {
-                ...getHeaders(),
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ status: newStatus }),
-        });
-
-        if (!response.ok) throw new Error('Gagal memperbarui status');
-
-        setPermohonanList(prev =>
-            prev.map(item =>
-                item.id === id ? { ...item, status: newStatus } : item
-            )
-        );
-    } catch (err) {
-        setError('Gagal memperbarui status: ' + err.message);
-    } finally {
-        setLoading(false);
-    }
-};
-
+  // Generate preview surat
   const handlePreview = () => {
     if (!selectedPermohonan) {
       setError('Pilih permohonan terlebih dahulu.');
@@ -827,10 +957,21 @@ export default function PermohonanSurat() {
       setError('Isi formulir terlebih dahulu.');
       return null;
     }
+    // Validasi ttd_nama
+    if (!formData.ttd_nama) {
+      setError('Silakan pilih "Yang Bertandatangan".');
+      return null;
+    }
+    // Validasi ttd_nama_lengkap
+    if (!formData.ttd_nama_lengkap) {
+      setError('Nama Yang Bertandatangan tidak tersedia.');
+      return null;
+    }
     const content = suratTemplates[selectedTemplate].template(formData);
     return content;
   };
 
+  // Tombol Generate Surat
   const handleGenerateSurat = () => {
     if (!selectedPermohonan) {
       setError('Pilih permohonan terlebih dahulu.');
@@ -850,53 +991,51 @@ export default function PermohonanSurat() {
     }
   };
 
+  // Simpan surat ke server
   const handleSaveSurat = async () => {
-    if (!selectedPermohonan || !previewContent) {
-      setError('Tidak ada surat untuk disimpan.');
-      return;
-    }
-
-    // Validasi field wajib di frontend
-    if (!formData.no_surat) {
-      setError('Nomor surat harus diisi.');
-      return;
-    }
-    if (!formData.tujuan) {
-      setError('Tujuan surat harus diisi.');
-      return;
-    }
-    if (!formData.keterangan && !selectedPermohonan.jenis_surat) {
-      setError('Perihal atau jenis surat harus diisi.');
-      return;
-    }
-    if (!selectedPermohonan.jenis_surat) {
-      setError('Jenis surat harus diisi.');
-      return;
-    }
-
     try {
       setLoading(true);
+
+      // // Validasi id sebelum mengirim
+      // if (isNaN(parseInt(selectedPermohonan.id, 10))) {
+      //   throw new Error('ID permohonan harus berupa angka');
+      // }
+
+      const contentElement = document.createElement('div');
+      contentElement.innerHTML = previewContent;
+      contentElement.style.padding = '20px';
+      document.body.appendChild(contentElement);
+
+      const opt = {
+        margin: [10, 10, 10, 10],
+        filename: `${selectedPermohonan.jenis_surat}_${formData.no_surat}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      };
+
+      const pdfBlob = await html2pdf()
+        .set(opt)
+        .from(contentElement)
+        .output('blob');
+
+      document.body.removeChild(contentElement);
+
       let formDataToSend = new FormData();
-
-      // Petakan field ke kolom tabel
       formDataToSend.append('id', selectedPermohonan.id);
-      formDataToSend.append('nomor', formData.no_surat);
-
-      formDataToSend.append('tanggal', new Date().toISOString().split('T')[0]);
+      formDataToSend.append('nomor', formData.no_surat || '');
+      formDataToSend.append('tanggal', formData.tanggal || new Date().toISOString().split('T')[0]);
       formDataToSend.append('perihal', formData.keterangan || selectedPermohonan.jenis_surat);
-      formDataToSend.append('ditujukan', formData.tujuan);
+      formDataToSend.append('ditujukan', formData.ditujukan || '');
       formDataToSend.append('title', selectedPermohonan.jenis_surat);
+      formDataToSend.append('file', pdfBlob, opt.filename);
 
-      // Tangani upload file untuk kolom 'file'
-      formDataToSend.append('file', formData.dokumen_url || '');
-
-      // Log data yang dikirim
       console.log('Data yang dikirim ke server:');
       for (let pair of formDataToSend.entries()) {
         console.log(`${pair[0]}: ${pair[1]}`);
       }
 
-      const response = await fetch(API_ENDPOINTS.SURAT_KELUAR_ADD, {
+      const response = await fetch(API_ENDPOINTS.SEKRETARIS.SURAT_KELUAR_ADD, {
         method: 'POST',
         body: formDataToSend,
       });
@@ -907,20 +1046,60 @@ export default function PermohonanSurat() {
         if (errorData.message && errorData.message.includes('nomor')) {
           throw new Error('Nomor surat sudah digunakan, silakan gunakan nomor lain.');
         }
+        if (errorData.message && errorData.message.includes('ID')) {
+          throw new Error('ID permohonan tidak valid, harus berupa angka.');
+        }
+        if (errorData.message && errorData.message.includes('PDF')) {
+          throw new Error('File harus berupa PDF.');
+        }
+        if (errorData.message && errorData.message.includes('field wajib')) {
+          throw new Error('Semua field harus diisi.');
+        }
+        if (errorData.message && errorData.message.includes('tanggal tidak valid')) {
+          throw new Error('Format tanggal tidak valid, gunakan YYYY-MM-DD.');
+        }
+        throw new Error(`Gagal menyimpan surat: ${errorData.message || 'Kesalahan server'}`);
+      }
+
+      const responseData = await response.json();
+      console.log('Response dari server:', responseData);
+
+      // Perbarui status permohonan
+      const updateStatusResponse = await fetch(
+        API_ENDPOINTS.SEKRETARIS.PERMOHONAN_SURAT_UPDATE_STATUS(selectedPermohonan.id),
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ status: 'Selesai' }),
+        }
+      );
+
+      if (!updateStatusResponse.ok) {
+        const updateErrorData = await updateStatusResponse.json();
+        console.error('Detail kesalahan update status:', updateErrorData);
         throw new Error(
-          errorData.message || `Gagal menyimpan surat ke server (Status: ${response.status})`
+          updateErrorData.message || `Gagal memperbarui status (Status: ${updateStatusResponse.status})`
         );
       }
 
-
-      // Perbarui status ke Selesai jika belum
-      if (formData.status !== 'Selesai') {
-        await handleUpdateStatus(selectedPermohonan.id, 'Selesai');
-      }
+      // Perbarui permohonanList dengan status baru dan URL file (jika ada)
+      setPermohonanList((prevList) =>
+        prevList.map((item) =>
+          item.id === selectedPermohonan.id
+            ? {
+                ...item,
+                status: 'Selesai',
+                file_url: responseData.file_url || item.file_url, // Simpan URL file jika dikembalikan oleh server
+              }
+            : item
+        )
+      );
 
       setPreviewContent('');
       handleCloseForm();
-      alert('Surat berhasil disimpan.');
+      alert('Surat berhasil disimpan dan status diperbarui.');
     } catch (err) {
       setError('Gagal menyimpan surat: ' + err.message);
       console.error('Kesalahan di handleSaveSurat:', err);
@@ -929,271 +1108,319 @@ export default function PermohonanSurat() {
     }
   };
 
+  // Cetak surat
   const handlePrint = () => {
     if (!previewContent) {
       alert('Silakan generate preview surat terlebih dahulu.');
       return;
     }
 
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
+    const printFrame = document.createElement('iframe');
+    printFrame.style.position = 'absolute';
+    printFrame.style.left = '-9999px';
+    document.body.appendChild(printFrame);
+
+    printFrame.contentDocument.write(`
       <html>
         <head>
           <title>Cetak ${selectedPermohonan?.jenis_surat || 'Surat'}</title>
           <style>
-            body { font-family: 'Times New Roman', serif; line-height: 1.5; margin: 20px; }
+            body { 
+              font-family: 'Times New Roman', serif; 
+              line-height: 1.5; 
+              margin: 20px;
+            }
+            @page { margin: 0; }
           </style>
         </head>
         <body>
           ${previewContent}
-          <script>
-            setTimeout(() => {
-              window.print();
-              window.close();
-            }, 200);
-          </script>
         </body>
       </html>
     `);
-    printWindow.document.close();
+    printFrame.contentDocument.close();
+
+    printFrame.contentWindow.focus();
+    printFrame.contentWindow.print();
+
+    setTimeout(() => {
+      document.body.removeChild(printFrame);
+    }, 1000);
   };
 
+  // Pagination handlers
   const handleChangePage = (event, newPage) => setPage(newPage);
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
 
+  // Render error state
   if (error) {
     return (
-      <StyledCard>
-        <Typography color="error" p={3}>
-          {error}
-        </Typography>
-      </StyledCard>
+      <Box sx={{ p: { xs: 2, sm: 3, md: 4 }, display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <StyledCard>
+          <HeaderBox>
+            <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
+              Permohonan Surat
+            </Typography>
+          </HeaderBox>
+          <CardContent>
+            <Typography color="error" p={3}>
+              {error}
+            </Typography>
+          </CardContent>
+        </StyledCard>
+      </Box>
     );
   }
 
   return (
-    <StyledCard>
-      <HeaderBox>
-        <Typography variant="h6">Permohonan Surat</Typography>
-        <Box display="flex" alignItems="center" gap={2}>
-          <Typography variant="body1">Total: {permohonanList.length}</Typography>
-          <Button
-            variant="contained"
-            color="secondary"
-            startIcon={<AddIcon />}
-            onClick={() => router.push('/permohonan-surat/baru')}
-          >
-            Buat Baru
-          </Button>
-        </Box>
-      </HeaderBox>
-
-      <CardContent>
-        {loading ? (
-          <Box display="flex" justifyContent="center" p={4}>
-            <CircularProgress />
-          </Box>
-        ) : permohonanList.length === 0 ? (
-          <Typography align="center" p={4}>
-            Tidak ada permohonan surat.
+    <Box sx={{ p: { xs: 2, sm: 3, md: 4 }, display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <StyledCard>
+        <HeaderBox>
+          <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
+            Permohonan Surat
           </Typography>
-        ) : (
-          <>
-            <TableContainer component={Paper}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>No</TableCell>
-                    <TableCell>NIK</TableCell>
-                    <TableCell>Nama</TableCell>
-                    <TableCell>Jenis Surat</TableCell>
-                    <TableCell>Keterangan</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Tanggal</TableCell>
-                    <TableCell>Aksi</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {permohonanList
-                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                    .map((permohonan, index) => (
-                      <TableRow key={permohonan.id}>
-                        <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                        <TableCell>{permohonan.nik}</TableCell>
-                        <TableCell>{permohonan.nama_lengkap}</TableCell>
-                        <TableCell>{permohonan.jenis_surat}</TableCell>
-                        <TableCell>{permohonan.keterangan}</TableCell>
-                        <TableCell>
-                          <Chip
-                            label={permohonan.status}
-                            color={statusColors[permohonan.status] || 'default'}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {new Date(permohonan.created_at).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          <Button
+        </HeaderBox>
+
+        <CardContent>
+          {loading ? (
+            <Box display="flex" justifyContent="center" p={4}>
+              <CircularProgress />
+            </Box>
+          ) : permohonanList.length === 0 ? (
+            <Typography align="center" p={4}>
+              Tidak ada permohonan surat.
+            </Typography>
+          ) : (
+            <>
+              <TableContainer component={Paper}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell><strong>No</strong></TableCell>
+                      <TableCell><strong>NIK</strong></TableCell>
+                      <TableCell><strong>Nama</strong></TableCell>
+                      <TableCell><strong>Jenis Surat</strong></TableCell>
+                      <TableCell><strong>Keterangan</strong></TableCell>
+                      <TableCell><strong>Status</strong></TableCell>
+                      <TableCell><strong>Tanggal</strong></TableCell>
+                      <TableCell><strong>Aksi</strong></TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {permohonanList
+                      .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                      .map((permohonan, index) => (
+                        <TableRow key={permohonan.id}>
+                          <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                          <TableCell>{permohonan.nik}</TableCell>
+                          <TableCell>{permohonan.nama_lengkap}</TableCell>
+                          <TableCell>{permohonan.jenis_surat}</TableCell>
+                          <TableCell>{permohonan.keterangan}</TableCell>
+                          <TableCell>
+                            <Chip
+                              label={permohonan.status}
+                              color={statusColors[permohonan.status] || 'default'}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            {new Date(permohonan.created_at).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="contained"
+                              size="small"
+                              onClick={() => handleOpenForm(permohonan)}
+                              disabled={permohonan.status === 'Selesai'}
+                            >
+                              Proses
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              <TablePagination
+                rowsPerPageOptions={[5, 10, 25]}
+                component="div"
+                count={permohonanList.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+              />
+            </>
+          )}
+        </CardContent>
+
+        {/* Dialog Form Processing */}
+        <Dialog open={!!selectedPermohonan} onClose={handleCloseForm} maxWidth="md" fullWidth>
+          <DialogTitle>
+            Proses Permohonan Surat: {selectedPermohonan?.jenis_surat}
+            <IconButton
+              aria-label="close"
+              onClick={handleCloseForm}
+              sx={{ position: 'absolute', right: 8, top: 8 }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent dividers>
+            <Box component="form" sx={{ mt: 2 }}>
+              {selectedPermohonan && suratTemplates[selectedPermohonan.jenis_surat]?.formFields.map((field) => (
+                <Box key={field.name} sx={{ mb: 2 }}>
+                  {field.type === 'select' ? (
+                    <>
+                      <Typography sx={{ display: 'block', mb: 1, fontWeight: 500 }}>
+                        {field.label}
+                      </Typography>
+                      <FormControl fullWidth>
+                        <Select
+                          id={field.name}
+                          name={field.name}
+                          value={formData[field.name] || ''}
+                          onChange={handleInputChange}
+                          disabled={field.disabled}
+                        >
+                          <MenuItem value="">
+                            <em>Pilih</em>
+                          </MenuItem>
+                          {field.options.map((option) => (
+                            <MenuItem key={option} value={option}>{option}</MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      {field.name === 'ttd_nama' && formData.ttd_nama && (
+                        <Box sx={{ mt: 2 }}>
+                          <Typography sx={{ display: 'block', mb: 1, fontWeight: 500 }}>
+                            Nama Yang Bertandatangan
+                          </Typography>
+                          <TextField
+                            value={formData.ttd_nama_lengkap || ''}
+                            fullWidth
+                            disabled
                             variant="outlined"
-                            size="small"
-                            onClick={() => handleOpenForm(permohonan)}
-                            disabled={permohonan.status === 'Selesai'}
-                          >
-                            Proses
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            <TablePagination
-              rowsPerPageOptions={[5, 10, 25]}
-              component="div"
-              count={permohonanList.length}
-              rowsPerPage={rowsPerPage}
-              page={page}
-              onPageChange={handleChangePage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-            />
-          </>
-        )}
-      </CardContent>
-
-      {/* Dialog Form Processing */}
-      <Dialog open={!!selectedPermohonan} onClose={handleCloseForm} maxWidth="md" fullWidth>
-        <DialogTitle>
-          Proses Permohonan Surat: {selectedPermohonan?.jenis_surat}
-          <IconButton
-            aria-label="close"
-            onClick={handleCloseForm}
-            sx={{ position: 'absolute', right: 8, top: 8 }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          <Box component="form" sx={{ mt: 2 }}>
-            {selectedPermohonan && suratTemplates[selectedPermohonan.jenis_surat]?.formFields.map((field) => (
-              <Box key={field.name} sx={{ mb: 2 }}>
-                <Typography component="label" htmlFor={field.name} sx={{ display: 'block', mb: 1, fontWeight: 500 }}>
-                  {field.label}
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                '& fieldset': { borderColor: '#ccc' },
+                                '&:hover fieldset': { borderColor: '#999' },
+                                '&.Mui-focused fieldset': { borderColor: '#1976d2' },
+                              },
+                            }}
+                          />
+                        </Box>
+                      )}
+                    </>
+                  ) : field.type === 'file' ? (
+                    <>
+                      <Typography sx={{ display: 'block', mb: 1, fontWeight: 500 }}>
+                        {field.label}
+                      </Typography>
+                      <input
+                        id={field.name}
+                        name={field.name}
+                        type="file"
+                        accept={field.accept}
+                        onChange={handleFileChange}
+                        style={{ marginTop: '8px', display: 'block' }}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <Typography sx={{ display: 'block', mb: 1, fontWeight: 500 }}>
+                        {field.label}
+                      </Typography>
+                      <TextField
+                        id={field.name}
+                        name={field.name}
+                        value={formData[field.name] || ''}
+                        onChange={handleInputChange}
+                        placeholder={field.placeholder}
+                        type={field.type === 'date' ? 'date' : 'text'}
+                        multiline={field.type === 'textarea'}
+                        rows={field.type === 'textarea' ? 4 : 1}
+                        fullWidth
+                        variant="outlined"
+                        disabled={field.disabled}
+                        InputLabelProps={field.type === 'date' ? { shrink: true } : undefined}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            '& fieldset': { borderColor: '#ccc' },
+                            '&:hover fieldset': { borderColor: '#999' },
+                            '&.Mui-focused fieldset': { borderColor: '#1976d2' },
+                          },
+                        }}
+                      />
+                    </>
+                  )}
+                </Box>
+              ))}
+              <Box sx={{ mb: 2 }}>
+                <Typography sx={{ display: 'block', mb: 1, fontWeight: 500 }}>
+                  Keterangan
                 </Typography>
-                {field.type === 'file' ? (
-                  <input
-                    id={field.name}
-                    name={field.name}
-                    type="file"
-                    accept={field.accept}
-                    onChange={handleFileChange}
-                    style={{ marginTop: '8px', display: 'block' }}
-                  />
-                ) : (
-                  <TextField
-                    id={field.name}
-                    name={field.name}
-                    value={formData[field.name] || ''}
-                    onChange={handleInputChange}
-                    placeholder={field.placeholder}
-                    type={field.type === 'date' ? 'date' : 'text'}
-                    multiline={field.type === 'textarea'}
-                    rows={field.type === 'textarea' ? 4 : 1}
-                    fullWidth
-                    variant="outlined"
-                    disabled={field.disabled}
-                    InputLabelProps={field.type === 'date' ? { shrink: true } : undefined}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        '& fieldset': { borderColor: '#ccc' },
-                        '&:hover fieldset': { borderColor: '#999' },
-                        '&.Mui-focused fieldset': { borderColor: '#1976d2' },
-                      },
-                    }}
-                  />
-                )}
+                <TextField
+                  name="keterangan"
+                  value={formData.keterangan || ''}
+                  onChange={handleInputChange}
+                  fullWidth
+                  multiline
+                  rows={3}
+                />
               </Box>
-            ))}
-            <TextField
-              label="Keterangan"
-              name="keterangan"
-              value={formData.keterangan || ''}
-              onChange={handleInputChange}
-              fullWidth
-              margin="normal"
-              multiline
-              rows={3}
-            />
-            <FormControl fullWidth margin="normal">
-              <InputLabel id="status-label">Status</InputLabel>
-              <Select
-                labelId="status-label"
-                name="status"
-                value={formData.status || ''}
-                onChange={handleInputChange}
-                label="Status"
-                disabled={loading}
-              >
-                {statusOptions.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseForm}>Batal</Button>
-          <Button
-            onClick={handleGenerateSurat}
-            variant="contained"
-            color="primary"
-            disabled={loading}
-          >
-            Preview Surat
-          </Button>
-        </DialogActions>
-      </Dialog>
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseForm}>Batal</Button>
+            <Button
+              onClick={handleGenerateSurat}
+              variant="contained"
+              disabled={loading}
+            >
+              Preview Surat
+            </Button>
+          </DialogActions>
+        </Dialog>
 
-      {/* Dialog Preview Surat */}
-      <Dialog open={!!previewContent} onClose={() => setPreviewContent('')} maxWidth="lg" fullWidth>
-        <DialogTitle>
-          Preview Surat
-          <IconButton
-            aria-label="close"
-            onClick={() => setPreviewContent('')}
-            sx={{ position: 'absolute', right: 8, top: 8 }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          <div dangerouslySetInnerHTML={{ __html: previewContent }} />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setPreviewContent('')}>Kembali</Button>
-          <Button
-            onClick={handleSaveSurat}
-            variant="contained"
-            color="primary"
-            startIcon={<SaveIcon />}
-            disabled={loading}
-          >
-            Simpan
-          </Button>
-          <Button
-            onClick={handlePrint}
-            variant="contained"
-            color="primary"
-            startIcon={<PrintIcon />}
-          >
-            Cetak Surat
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </StyledCard>
+        {/* Dialog Preview Surat */}
+        <Dialog open={!!previewContent} onClose={() => setPreviewContent('')} maxWidth="lg" fullWidth>
+          <DialogTitle>
+            Preview Surat
+            <IconButton
+              aria-label="close"
+              onClick={() => setPreviewContent('')}
+              sx={{ position: 'absolute', right: 8, top: 8 }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent dividers>
+            <div dangerouslySetInnerHTML={{ __html: previewContent }} />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setPreviewContent('')}>Kembali</Button>
+            <Button
+              onClick={handleSaveSurat}
+              variant="contained"
+              startIcon={<SaveIcon />}
+              disabled={loading}
+            >
+              Simpan
+            </Button>
+            <Button
+              onClick={handlePrint}
+              variant="contained"
+              startIcon={<PrintIcon />}
+              disabled={loading}
+            >
+              Cetak
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </StyledCard>
+    </Box>
   );
 }

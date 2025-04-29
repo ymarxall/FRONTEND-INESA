@@ -1,6 +1,6 @@
 // src/config/api.js
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
-const SEKRETARIS_API_BASE_URL = process.env.NEXT_PUBLIC_SEKRETARIS_API_BASE_URL || 'http://localhost:8081';
+const SEKRETARIS_API_BASE_URL = process.env.NEXT_PUBLIC_SEKRETARIS_API_BASE_URL || 'http://192.168.1.85:8088/api';
 const PRODUCTION_API_BASE_URL = process.env.NEXT_PUBLIC_PRODUCTION_API_BASE_URL || 'https://joyful-analysis-production.up.railway.app';
 
 export const API_ENDPOINTS = {
