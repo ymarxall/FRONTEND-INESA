@@ -267,21 +267,27 @@ export default function Pengeluaran() {
         startDate.setDate(today.getDate() - 1)
         return { start: formatDate(startDate), end: formatDate(today) }
       case '7days':
+        today.setHours(24, 0, 0, 0)
         startDate.setDate(today.getDate() - 7)
         return { start: formatDate(startDate), end: formatDate(today) }
       case '1month':
+        today.setHours(24, 0, 0, 0)
         startDate.setMonth(today.getMonth() - 1)
         return { start: formatDate(startDate), end: formatDate(today) }
       case '3months':
+        today.setHours(24, 0, 0, 0)
         startDate.setMonth(today.getMonth() - 3)
         return { start: formatDate(startDate), end: formatDate(today) }
       case '6months':
+        today.setHours(24, 0, 0, 0)
         startDate.setMonth(today.getMonth() - 6)
         return { start: formatDate(startDate), end: formatDate(today) }
       case '1year':
+        today.setHours(24, 0, 0, 0)
         startDate.setFullYear(today.getFullYear() - 1)
         return { start: formatDate(startDate), end: formatDate(today) }
       default:
+        today.setHours(24, 0, 0, 0)
         startDate.setDate(today.getDate() - 7)
         return { start: formatDate(startDate), end: formatDate(today) }
     }

@@ -115,13 +115,13 @@ const StyledCard = styled(Card)(({ theme, variant, delay = 0 }) => ({
     ? variant === 'income'
       ? 'linear-gradient(135deg, #2196F3 30%, #64B5F6 100%)'
       : variant === 'expense'
-      ? 'linear-gradient(135deg, #1E88E5 30%, #42A5F5 100%)'
-      : 'linear-gradient(135deg, #1976D2 30%, #2196F3 100%)'
+        ? 'linear-gradient(135deg, #1E88E5 30%, #42A5F5 100%)'
+        : 'linear-gradient(135deg, #1976D2 30%, #2196F3 100%)'
     : variant === 'income'
-    ? 'linear-gradient(135deg, #1976D2 0%, #42A5F5 100%)'
-    : variant === 'expense'
-    ? 'linear-gradient(135deg, #1565C0 0%, #1976D2 100%)'
-    : 'linear-gradient(135deg, #0D47A1 0%, #1565C0 100%)',
+      ? 'linear-gradient(135deg, #1976D2 0%, #42A5F5 100%)'
+      : variant === 'expense'
+        ? 'linear-gradient(135deg, #1565C0 0%, #1976D2 100%)'
+        : 'linear-gradient(135deg, #0D47A1 0%, #1565C0 100%)',
   color: '#ffffff',
   borderRadius: '16px',
   boxShadow: theme.palette.mode === 'dark'
@@ -318,23 +318,29 @@ export default function LaporanKeuangan() {
         startDate.setDate(today.getDate() - 1)
         return { start: formatDate(startDate), end: formatDate(today) }
       case '7days':
+        today.setHours(24, 0, 0, 0)
         startDate.setDate(today.getDate() - 7)
         return { start: formatDate(startDate), end: formatDate(today) }
       case '1month':
+        today.setHours(24, 0, 0, 0)
         startDate.setMonth(today.getMonth() - 1)
         return { start: formatDate(startDate), end: formatDate(today) }
       case '3months':
+        today.setHours(24, 0, 0, 0)
         startDate.setMonth(today.getMonth() - 3)
         return { start: formatDate(startDate), end: formatDate(today) }
       case '6months':
+        today.setHours(24, 0, 0, 0)
         startDate.setMonth(today.getMonth() - 6)
         return { start: formatDate(startDate), end: formatDate(today) }
       case '1year':
+        today.setHours(24, 0, 0, 0)
         startDate.setFullYear(today.getFullYear() - 1)
         return { start: formatDate(startDate), end: formatDate(today) }
-      case 'all':
       default:
-        return { start: null, end: null }
+        today.setHours(24, 0, 0, 0)
+        startDate.setDate(today.getDate() - 7)
+        return { start: formatDate(startDate), end: formatDate(today) }
     }
   }
 
