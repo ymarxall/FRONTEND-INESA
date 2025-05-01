@@ -33,6 +33,7 @@
         "next": "^15.3.1",
         "react": "18.2.0",
         "react-dom": "18.2.0",
+        "react-hook-form": "^7.56.1",
         "react-material-ui-carousel": "^3.4.2",
         "react-type-animation": "^3.2.0",
         "xlsx": "^0.18.5"

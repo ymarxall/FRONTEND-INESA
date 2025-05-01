@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -19,6 +19,8 @@ import {
   Grid,
   Divider,
   IconButton,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import { TypeAnimation } from 'react-type-animation';
@@ -44,6 +46,12 @@ const Home = () => {
     submissionDate: '',
     document: null,
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [notification, setNotification] = useState({
+    open: false,
+    message: '',
+    type: 'success',
+  });
 
   const handleOpenDialog = () => {
     setOpenDialog(true);
@@ -61,10 +69,242 @@ const Home = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  // Fetch data warga berdasarkan NIK
+  const fetchWargaByNIK = async (nik) => {
+    if (!nik || !validateNIK(nik)) return;
+    try {
+      const response = await fetch(`http://localhost:8080/api/warga/nik/${nik}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      });
+
+      const result = await response.json();
+      if (response.ok && result.data) {
+        setFormData((prev) => ({
+          ...prev,
+          nik: result.data.nik || '',
+          fullName: result.data.nama_lengkap || '',
+          birthDate: result.data.tanggal_lahir || '',
+          gender: result.data.jenis_kelamin || '',
+          nationality: result.data.kewarganegaraan === 'WNI' || result.data.kewarganegaraan === 'WNA' 
+            ? result.data.kewarganegaraan 
+            : '',
+          phone: result.data.no_hp || '',
+          education: result.data.pendidikan || '',
+          occupation: result.data.pekerjaan || '',
+          religion: result.data.agama || '',
+          maritalStatus: result.data.status_pernikahan || '',
+          address: result.data.alamat || '',
+        }));
+        setNotification({
+          open: true,
+          message: 'Data warga ditemukan dan diisi otomatis',
+          type: 'success',
+        });
+      } else {
+        setNotification({
+          open: true,
+          message: result.message || 'Data warga tidak ditemukan',
+          type: 'error',
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching warga:', error);
+      setNotification({
+        open: true,
+        message: 'Terjadi kesalahan saat mengambil data warga',
+        type: 'error',
+      });
+    } finally {
+      setTimeout(() => setNotification({ open: false, message: '', type: 'success' }), 3000);
+    }
+  };
+
+  // Trigger fetch saat NIK berubah
+  useEffect(() => {
+    if (formData.nik.length >= 16) {
+      fetchWargaByNIK(formData.nik);
+    }
+  }, [formData.nik]);
+
+  const validatePhoneNumber = (phone) => {
+    return phone.startsWith('08') || phone.startsWith('+62');
+  };
+
+  const validateName = (name) => {
+    return !/\d/.test(name);
+  };
+
+  const validateSpecialCharacters = (input) => {
+    const regex = /^[a-zA-Z0-9\s-]*$/;
+    return regex.test(input);
+  };
+
+  const validateNIK = (nik) => {
+    const regex = /^\d+$/;
+    return regex.test(nik);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
-    handleCloseDialog();
+    setIsLoading(true);
+    setNotification({ open: false, message: '', type: 'success' });
+
+    // Validasi NIK hanya boleh mengandung angka
+    if (!validateNIK(formData.nik) || formData.nik.length !== 16) {
+      setNotification({
+        open: true,
+        message: 'NIK hanya boleh mengandung angka dan harus 16 digit',
+        type: 'error',
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    // Validasi NIK tidak boleh mengandung karakter khusus
+    if (!validateSpecialCharacters(formData.nik)) {
+      setNotification({
+        open: true,
+        message: 'NIK tidak boleh mengandung karakter khusus',
+        type: 'error',
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    // Validasi nama tidak boleh mengandung angka atau karakter khusus
+    if (!validateName(formData.fullName)) {
+      setNotification({
+        open: true,
+        message: 'Nama tidak boleh mengandung angka',
+        type: 'error',
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    if (!validateSpecialCharacters(formData.fullName)) {
+      setNotification({
+        open: true,
+        message: 'Nama tidak boleh mengandung karakter khusus',
+        type: 'error',
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    // Validasi nomor telepon
+    if (!validatePhoneNumber(formData.phone)) {
+      setNotification({
+        open: true,
+        message: 'Nomor telepon harus dimulai dengan 08 atau +62',
+        type: 'error',
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    // Validasi file
+    if (formData.document && formData.document.size > 10 * 1024 * 1024) {
+      setNotification({
+        open: true,
+        message: 'Ukuran file tidak boleh lebih dari 10MB',
+        type: 'error',
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    const allowedFileTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+    if (formData.document && !allowedFileTypes.includes(formData.document.type)) {
+      setNotification({
+        open: true,
+        message: 'Format file tidak didukung. Harap unggah file PDF, JPG, atau PNG.',
+        type: 'error',
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    const formDataToSend = new FormData();
+    formDataToSend.append('nik', formData.nik);
+    formDataToSend.append('nama_lengkap', formData.fullName);
+    formDataToSend.append('alamat', formData.address);
+    formDataToSend.append('jenis_surat', formData.letterType);
+    formDataToSend.append('keterangan', formData.purpose);
+    formDataToSend.append('no_hp', formData.phone);
+    if (formData.document) {
+      formDataToSend.append('file_upload', formData.document);
+    }
+
+    try {
+      const response = await fetch('http://localhost:8085/api/warga/register', {
+        method: 'POST',
+        body: formDataToSend,
+        headers: {
+          Accept: 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const textResponse = await response.text();
+        console.error('Error response:', textResponse);
+
+        let errorMessage = 'Terjadi kesalahan pada server';
+        try {
+          const errorResponse = JSON.parse(textResponse);
+          errorMessage = errorResponse.message || errorMessage;
+        } catch (jsonError) {
+          errorMessage = textResponse || errorMessage;
+        }
+
+        throw new Error(errorMessage);
+      }
+
+      const result = await response.json();
+      console.log('Success:', result);
+      setNotification({
+        open: true,
+        message: 'Pengajuan surat berhasil dikirim!',
+        type: 'success',
+      });
+      handleCloseDialog();
+      // Reset form setelah sukses
+      setFormData({
+        nik: '',
+        fullName: '',
+        birthDate: '',
+        gender: '',
+        nationality: '',
+        phone: '',
+        education: '',
+        occupation: '',
+        religion: '',
+        maritalStatus: '',
+        address: '',
+        letterType: '',
+        purpose: '',
+        submissionDate: '',
+        document: null,
+      });
+    } catch (error) {
+      console.error('Error:', error);
+      setNotification({
+        open: true,
+        message: error instanceof Error ? error.message : 'Terjadi kesalahan saat mengirim pengajuan surat.',
+        type: 'error',
+      });
+    } finally {
+      setIsLoading(false);
+      setTimeout(() => setNotification({ open: false, message: '', type: 'success' }), 3000);
+    }
+  };
+
+  const handleCloseNotification = () => {
+    setNotification({ open: false, message: '', type: 'success' });
   };
 
   return (
@@ -172,6 +412,7 @@ const Home = () => {
                         required
                         variant="outlined"
                         size="small"
+                        inputProps={{ maxLength: 16 }}
                         InputLabelProps={{ style: { fontSize: '0.875rem' } }}
                         InputProps={{ style: { fontSize: '0.875rem' } }}
                       />
@@ -441,7 +682,7 @@ const Home = () => {
                         InputProps={{ style: { fontSize: '0.875rem' } }}
                       />
                       <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                        Contoh: ktp_john_doe.pdf (maks. 5MB)
+                        Contoh: ktp_john_doe.pdf (maks. 10MB)
                       </Typography>
                     </FormControl>
                   </Grid>
@@ -472,6 +713,7 @@ const Home = () => {
                     onClick={handleCloseDialog}
                     variant="outlined"
                     sx={{ borderRadius: '8px', padding: '8px 16px', fontSize: '0.875rem' }}
+                    disabled={isLoading}
                   >
                     Batal
                   </Button>
@@ -481,8 +723,9 @@ const Home = () => {
                     variant="contained"
                     endIcon={<SendIcon fontSize="small" />}
                     sx={{ borderRadius: '8px', padding: '8px 16px', fontSize: '0.875rem' }}
+                    disabled={isLoading}
                   >
-                    Kirim Pengajuan
+                    {isLoading ? 'Mengirim...' : 'Kirim Pengajuan'}
                   </Button>
                 </Box>
               </form>
@@ -490,6 +733,21 @@ const Home = () => {
           </motion.div>
         </DialogContent>
       </Dialog>
+
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={3000}
+        onClose={handleCloseNotification}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={handleCloseNotification}
+          severity={notification.type}
+          sx={{ width: '100%' }}
+        >
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

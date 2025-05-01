@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useSoftUIController, setMiniSidenav } from '@/context';
 import {
   AppBar,
@@ -17,7 +17,7 @@ import {
   Menu,
   MenuItem,
   Container,
-  Grid,
+  Grid
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -30,6 +30,7 @@ import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import Link from 'next/link';
 import Image from 'next/image';
+import Cookies from 'js-cookie';
 import { colors, shadows } from '@/styles/colors';
 
 const menuItems = [
@@ -37,13 +38,14 @@ const menuItems = [
   { text: 'Manajemen Pengguna', icon: <PeopleIcon />, path: '/admin/manajemen-pengguna' },
   { text: 'Data Pegawai', icon: <PeopleIcon />, path: '/admin/data-pegawai' },
   { text: 'Data Penduduk', icon: <ReceiptIcon />, path: '/admin/data-penduduk' },
-  { text: 'Kelola Konten', icon: <ContentCopyIcon />, path: '/admin/kelola-konten' },
+  { text: 'Kelola Konten', icon: <ContentCopyIcon />, path: '/admin/kelola-konten' }
 ];
 
 export default function AdminLayout({ children }) {
   const [controller, dispatch] = useSoftUIController();
   const { miniSidenav } = controller;
   const pathname = usePathname();
+  const router = useRouter();
   const [anchorEl, setAnchorEl] = useState(null);
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -73,9 +75,50 @@ export default function AdminLayout({ children }) {
     handleClose();
   };
 
+  const handleLogout = async () => {
+    console.log('Logout initiated');
+    console.log('Before logout - localStorage:', {
+      token: localStorage.getItem('token'),
+      user: localStorage.getItem('user')
+    });
+    console.log('Before logout - Cookies:', {
+      token: Cookies.get('token'),
+      isAuthenticated: Cookies.get('isAuthenticated')
+    });
+
+    try {
+      const response = await fetch('http://localhost:8080/api/logout', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (!response.ok) {
+        console.error('Backend logout failed:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error calling logout endpoint:', error);
+    }
+
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    Cookies.remove('token', { path: '/' });
+    Cookies.remove('isAuthenticated', { path: '/' });
+
+    console.log('After logout - localStorage:', {
+      token: localStorage.getItem('token'),
+      user: localStorage.getItem('user')
+    });
+    console.log('After logout - Cookies:', {
+      token: Cookies.get('token'),
+      isAuthenticated: Cookies.get('isAuthenticated')
+    });
+
+    router.push('/authentication/sign-in');
+  };
+
   const drawer = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Toolbar sx={{ display: 'flex', alignItems: 'center', px: 3, py: 2, minHeight: '80px !important' }}>
+      <Toolbar sx={{ display: 'flex', alignItems: 'center', px: 3, py: 2, minHeight: '80px' }}>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Image
             src="/image.png"
@@ -91,17 +134,14 @@ export default function AdminLayout({ children }) {
                 fontWeight: 'bold',
                 color: darkMode ? '#fff' : colors.primary.main,
                 fontSize: '1.25rem',
-                lineHeight: '1.2',
+                lineHeight: '1.2'
               }}
             >
               Desa Bontomanai
             </Typography>
             <Typography
               variant="caption"
-              sx={{
-                color: darkMode ? '#fff' : colors.text.secondary,
-                display: 'block',
-              }}
+              sx={{ color: darkMode ? '#fff' : colors.text.secondary, display: 'block' }}
             >
               Kec. Rumbia, Kab. Jeneponto
             </Typography>
@@ -112,11 +152,7 @@ export default function AdminLayout({ children }) {
       <Box sx={{ px: 3, mb: 2 }}>
         <Typography
           variant="body2"
-          sx={{
-            color: darkMode ? '#fff' : colors.text.secondary,
-            fontWeight: 500,
-            mb: 1,
-          }}
+          sx={{ color: darkMode ? '#fff' : colors.text.secondary, fontWeight: 500, mb: 1 }}
         >
           MENU ADMIN
         </Typography>
@@ -135,25 +171,21 @@ export default function AdminLayout({ children }) {
               py: 1,
               color: darkMode ? '#fff' : 'inherit',
               '&.Mui-selected': {
-                bgcolor: darkMode ? 'rgba(255, 255, 255, 0.1)' : '#4caf50',
+                backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.1)' : '#4caf50',
                 color: darkMode ? '#fff' : '#fff',
-                '& .MuiListItemIcon-root': {
-                  color: darkMode ? '#fff' : '#fff',
-                },
+                '& .MuiListItemIcon-root': { color: darkMode ? '#fff' : '#fff' }
               },
               '&:hover': {
-                bgcolor: darkMode ? 'rgba(255, 255, 255, 0.05)' : '#4caf50',
+                backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : '#4caf50',
                 color: '#fff',
-                '& .MuiListItemIcon-root': {
-                  color: '#fff',
-                },
-              },
+                '& .MuiListItemIcon-root': { color: '#fff' }
+              }
             }}
           >
             <ListItemIcon
               sx={{
                 minWidth: 40,
-                color: darkMode ? '#fff' : pathname === item.path ? colors.primary.main : colors.text.secondary,
+                color: darkMode ? '#fff' : pathname === item.path ? colors.primary.main : colors.text.secondary
               }}
             >
               {item.icon}
@@ -163,8 +195,8 @@ export default function AdminLayout({ children }) {
               sx={{
                 '& .MuiTypography-root': {
                   fontWeight: pathname === item.path ? 600 : 400,
-                  color: darkMode ? '#fff' : 'inherit',
-                },
+                  color: darkMode ? '#fff' : 'inherit'
+                }
               }}
             />
           </ListItem>
@@ -173,16 +205,16 @@ export default function AdminLayout({ children }) {
 
       <List sx={{ px: 2, mt: 'auto' }}>
         <ListItem
-          onClick={() => console.log('Logout clicked')}
+          onClick={handleLogout}
           sx={{
             borderRadius: '12px',
             py: 1,
             color: darkMode ? '#fff' : colors.text.secondary,
             cursor: 'pointer',
             '&:hover': {
-              bgcolor: darkMode ? 'rgba(255, 255, 255, 0.05)' : `${colors.primary.light}20`,
-            },
-          }}
+              backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : `${colors.primary.light}20`
+            }}
+          }
         >
           <ListItemIcon sx={{ minWidth: 40, color: 'inherit' }}>
             <LogoutIcon />
@@ -194,34 +226,25 @@ export default function AdminLayout({ children }) {
   );
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        bgcolor: darkMode ? '#1a1a1a' : '#F8F9FA',
-        minHeight: '100vh',
-        color: darkMode ? '#fff' : colors.text.primary,
-      }}
-    >
+    <Box sx={{ display: 'flex', backgroundColor: darkMode ? '#1a1a1a' : '#F8F9FA', minHeight: '100vh', color: darkMode ? '#fff' : colors.text.primary }}>
       <AppBar
         position="fixed"
         sx={{
           width: { xs: '100%', sm: `calc(100% - ${miniSidenav ? '80px' : '280px'})` },
-          ml: { xs: 0, sm: miniSidenav ? '80px' : '280px' },
-          bgcolor: darkMode ? 'rgba(26, 26, 26, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+          marginLeft: { xs: 0, sm: miniSidenav ? '80px' : '280px' },
+          backgroundColor: darkMode ? 'rgba(26, 26, 26, 0.8)' : 'rgba(255, 255, 255, 0.8)',
           backdropFilter: 'blur(6px)',
           color: darkMode ? '#fff' : colors.text.primary,
           boxShadow: 'none',
-          '& .MuiIconButton-root': {
-            color: darkMode ? '#fff' : colors.text.secondary,
-          },
+          '& .MuiIconButton-root': { color: darkMode ? '#fff' : colors.text.secondary }
         }}
       >
-        <Toolbar sx={{ minHeight: { xs: '64px !important', sm: '80px !important' }, px: { xs: 2, sm: 3 } }}>
+        <Toolbar sx={{ minHeight: { xs: '64px', sm: '80px' }, paddingX: { xs: 2, sm: 3 } }}>
           <IconButton
             color="inherit"
             edge="start"
             onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: 'none' } }}
+            sx={{ marginRight: 2, display: { sm: 'none' } }}
           >
             <MenuIcon />
           </IconButton>
@@ -252,12 +275,10 @@ export default function AdminLayout({ children }) {
                   borderRadius: '12px',
                   minWidth: '200px',
                   boxShadow: shadows.card,
-                  bgcolor: darkMode ? '#1a1a1a' : 'white',
-                  color: darkMode ? '#fff' : 'inherit',
-                  '& .MuiListItemIcon-root': {
-                    color: darkMode ? '#fff' : 'inherit',
-                  },
-                },
+                  backgroundColor: darkMode ? '#1a1a1a' : 'white',
+                  color: darkMode ? '#fff' : colors.text.primary,
+                  '& .MuiListItemIcon-root': { color: darkMode ? '#fff' : colors.text.primary }
+                }
               }}
             >
               <MenuItem onClick={toggleDarkMode}>
@@ -271,14 +292,14 @@ export default function AdminLayout({ children }) {
               sx={{
                 width: 36,
                 height: 36,
-                bgcolor: colors.primary.main,
+                backgroundColor: colors.primary.main,
                 color: 'white',
                 borderRadius: '12px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontWeight: 'bold',
-                fontSize: '0.875rem',
+                fontSize: '0.875rem'
               }}
             >
               A
@@ -297,14 +318,12 @@ export default function AdminLayout({ children }) {
           '& .MuiDrawer-paper': {
             boxSizing: 'border-box',
             width: { xs: '240px', sm: '280px' },
-            bgcolor: darkMode ? '#1a1a1a' : 'white',
+            backgroundColor: darkMode ? '#1a1a1a' : 'white',
             borderRight: 'none',
             boxShadow: shadows.card,
             color: darkMode ? '#fff' : colors.text.primary,
-            '& .MuiListItemIcon-root': {
-              color: darkMode ? '#fff' : colors.text.secondary,
-            },
-          },
+            '& .MuiListItemIcon-root': { color: darkMode ? '#fff' : colors.text.secondary }
+          }
         }}
       >
         {drawer}
@@ -317,16 +336,13 @@ export default function AdminLayout({ children }) {
           '& .MuiDrawer-paper': {
             boxSizing: 'border-box',
             width: miniSidenav ? '80px' : '280px',
-            bgcolor: darkMode ? '#1a1a1a' : 'white',
+            backgroundColor: darkMode ? '#1a1a1a' : 'white',
             borderRight: 'none',
             boxShadow: shadows.card,
             color: darkMode ? '#fff' : colors.text.primary,
-            '& .MuiListItemIcon-root': {
-              color: darkMode ? '#fff' : colors.text.secondary,
-            },
-          },
+            '& .MuiListItemIcon-root': { color: darkMode ? '#fff' : colors.text.secondary }
+          }
         }}
-        open
       >
         {drawer}
       </Drawer>
@@ -334,40 +350,55 @@ export default function AdminLayout({ children }) {
       <Box
         sx={{
           flexGrow: 1,
-          p: { xs: 2, sm: 3 },
-          mt: '80px',
-          ml: { xs: 0, sm: miniSidenav ? '80px' : '280px' },
+          padding: { xs: 2, sm: 3 },
+          marginTop: '80px',
+          marginLeft: { xs: 0, sm: miniSidenav ? '80px' : '280px' },
           width: { xs: '100%', sm: `calc(100% - ${miniSidenav ? '80px' : '280px'})` },
           display: 'flex',
           flexDirection: 'column',
-          minHeight: 'calc(100vh - 80px)',
+          minHeight: 'calc(100vh - 80px)'
         }}
       >
         <Box sx={{ flex: 1 }}>{children}</Box>
         <Box
           component="footer"
           sx={{
-            py: 3,
-            px: 2,
-            mt: 'auto',
+            paddingY: 3,
+            paddingX: 2,
+            marginTop: 'auto',
             backgroundColor: darkMode ? 'rgba(26, 26, 26, 0.8)' : 'rgba(255, 255, 255, 0.8)',
             backdropFilter: 'blur(6px)',
             borderTop: '1px solid',
-            borderColor: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+            borderColor: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
           }}
         >
           <Container maxWidth="lg">
             <Grid container spacing={3} alignItems="center" justifyContent="space-between">
               <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color={darkMode ? '#fff' : 'text.secondary'} align="left">
+                <Typography
+                  variant="body2"
+                  color={darkMode ? '#fff' : 'text.secondary'}
+                  align="left"
+                >
                   © {new Date().getFullYear()} Sistem Informasi Desa
                 </Typography>
-                <Typography variant="caption" color={darkMode ? '#fff' : 'text.secondary'} display="block">
+                <Typography
+                  variant="caption"
+                  color={darkMode ? '#fff' : 'text.secondary'}
+                  display="block"
+                >
                   Desa Bontomanai, Kec. Rumbia, Kab. Jeneponto
                 </Typography>
               </Grid>
               <Grid item xs={12} sm={6}>
-                <Box sx={{ display: 'flex', justifyContent: { xs: 'flex-start', sm: 'flex-end' }, gap: 2, flexWrap: 'wrap' }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: { xs: 'flex-start', sm: 'flex-end' },
+                    gap: 2,
+                    flexWrap: 'wrap'
+                  }}
+                >
                   <Typography variant="caption" color={darkMode ? '#fff' : 'text.secondary'}>
                     Versi 1.0.0
                   </Typography>
@@ -386,10 +417,7 @@ export default function AdminLayout({ children }) {
                     >
                       <Typography
                         variant="caption"
-                        sx={{
-                          fontWeight: 600,
-                          '&:hover': { textDecoration: 'underline' },
-                        }}
+                        sx={{ fontWeight: 600, '&:hover': { textDecoration: 'underline' } }}
                       >
                         COCONUT Computer Club
                       </Typography>
