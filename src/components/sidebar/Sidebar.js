@@ -94,17 +94,18 @@ const menuItems = [
   { title: 'Surat Masuk', icon: <TrendingUpIcon />, path: '/pemasukan' },
   { title: 'Surat Keluar', icon: <TrendingDownIcon />, path: '/pengeluaran' },
   { title: 'Laporan Keuangan', icon: <AssessmentIcon />, path: '/laporan' },
-  { title: 'Data Penduduk', icon: <PersonIcon />, path: '/dashboard/penduduk' }, // Ditambahkan untuk konsistensi
 ]
 
+// Fungsi untuk mendapatkan cookie
 const getCookie = (name) => {
   const value = `; ${document.cookie}`
   const parts = value.split(`; ${name}=`)
   if (parts.length === 2) return parts.pop().split(';').shift()
 }
 
+// Fungsi untuk menghapus cookie
 const removeCookie = (name) => {
-  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax`
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`
 }
 
 export default function Sidebar() {
@@ -150,12 +151,15 @@ export default function Sidebar() {
           throw new Error(data.message || `Gagal mengambil data konten: ${response.status}`)
         }
 
+        // Sesuaikan struktur data berdasarkan respon API
         const contentData = data.data ? data.data : data
 
+        // Simpan logo ke localStorage seperti di SignIn
         if (contentData.logo) {
           localStorage.setItem('logo', contentData.logo)
         }
 
+        // Ambil logo dari localStorage dan decode seperti di SignIn
         const logoPath = localStorage.getItem('logo')
         const logoUrl = logoPath ? `http://localhost:8080/${decodeURIComponent(logoPath)}` : '/image.png'
 
@@ -168,6 +172,7 @@ export default function Sidebar() {
         console.error('[FETCH] Gagal mengambil data konten:', err)
         setError('Gagal mengambil data konten: ' + err.message)
 
+        // Kembali ke nilai default jika gagal
         setContent({
           logo: '/image.png',
           title: 'Desa Bonto Ujung',
@@ -186,10 +191,7 @@ export default function Sidebar() {
   }
 
   const handleLogout = () => {
-    console.log('[LOGOUT] Menghapus cookie token') // Debugging
     removeCookie('token')
-    localStorage.removeItem('logo') // Bersihkan logo dari localStorage
-    console.log('[LOGOUT] Mengarahkan ke /authentication/sign-in') // Debugging
     router.push('/authentication/sign-in')
   }
 

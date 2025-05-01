@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import {
-  Box, Typography, Grid, Card, CardContent, CircularProgress, Fade, Chip, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Stack, Alert, TextField, TablePagination, Dialog, DialogTitle, DialogContent, DialogActions
+  Box, Typography, Grid, Card, CardContent, CircularProgress, Fade, Chip, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Stack, Alert, TextField, Dialog, DialogTitle, DialogContent, DialogActions
 } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import { useRouter } from 'next/navigation'
@@ -15,6 +15,7 @@ import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet'
 import PaymentsIcon from '@mui/icons-material/Payments'
 import MailIcon from '@mui/icons-material/Mail'
 import SendIcon from '@mui/icons-material/Send'
+import AssignmentIcon from '@mui/icons-material/Assignment'
 
 // Styled Components
 const DashboardCard = styled(Card)(({ theme }) => ({
@@ -98,6 +99,16 @@ const TextNoCursor = styled(Typography)({
   cursor: 'default',
 })
 
+// Menghilangkan garis antar baris di tabel
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
+  '&:last-child td, &:last-child th': {
+    border: 0,
+  },
+  '& td, & th': {
+    borderBottom: 'none', // Menghilangkan garis bawah
+  },
+}))
+
 // Fungsi fetch dengan timeout dan retry
 const fetchWithTimeout = async (url, options, timeout = 15000) => {
   const controller = new AbortController()
@@ -124,12 +135,11 @@ export default function Dashboard() {
     totalPengeluaran: 0,
     suratMasuk: 0,
     suratKeluar: 0,
+    permohonanSurat: 0, // Ditambahkan untuk permohonan surat
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [search, setSearch] = useState('')
-  const [page, setPage] = useState(0)
-  const [rowsPerPage, setRowsPerPage] = useState(5)
   const [openDialog, setOpenDialog] = useState(false)
   const [dialogContent, setDialogContent] = useState(null)
   const router = useRouter()
@@ -194,6 +204,7 @@ export default function Dashboard() {
       })
       const suratKeluarData = suratKeluarResponse.ok ? await suratKeluarResponse.json() : { total: 0 }
 
+      // Asumsi: Tidak ada endpoint untuk permohonan surat, set ke 0
       setStats({
         totalPenduduk: pendudukData.total || 0,
         lakiLaki: pendudukData.laki || 0,
@@ -202,6 +213,7 @@ export default function Dashboard() {
         totalPengeluaran: pengeluaranData.total || 0,
         suratMasuk: suratMasukData.total || 0,
         suratKeluar: suratKeluarData.total || 0,
+        permohonanSurat: 0, // Ganti dengan fetch jika ada endpoint
       })
     } catch (error) {
       console.error('[FETCH] Gagal mengambil data statistik:', error)
@@ -237,32 +249,18 @@ export default function Dashboard() {
   const suratData = [
     { jenis: 'Surat Masuk', jumlah: stats.suratMasuk, path: '/surat/masuk' },
     { jenis: 'Surat Keluar', jumlah: stats.suratKeluar, path: '/surat/keluar' },
+    { jenis: 'Permohonan Surat', jumlah: stats.permohonanSurat, path: '/surat/permohonan' },
   ]
 
-  // Filter dan paginasi
+  // Filter tanpa paginasi
   const filteredSurat = useMemo(() => {
     return suratData.filter(item => item.jenis.toLowerCase().includes(search.toLowerCase()))
   }, [search])
-
-  const paginatedSurat = useMemo(() => {
-    const start = page * rowsPerPage
-    return filteredSurat.slice(start, start + rowsPerPage)
-  }, [filteredSurat, page, rowsPerPage])
-
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage)
-  }
-
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10))
-    setPage(0)
-  }
 
   const handleViewDetails = (item) => {
     setDialogContent({
       jenis: item.jenis,
       jumlah: item.jumlah,
-      path: item.path,
     })
     setOpenDialog(true)
   }
@@ -364,7 +362,7 @@ export default function Dashboard() {
                 </Grid>
               </Grid>
 
-              {/* Baris Tengah: Pemasukan dan Pengeluaran */}
+              {/* Baris Tengah: Pemasukan dan Pengeluaran dengan Tombol */}
               <Grid container spacing={3} sx={{ mt: 2 }}>
                 <Grid item xs={12} sm={6}>
                   <FinancialCard>
@@ -378,6 +376,13 @@ export default function Dashboard() {
                       <TextNoCursor variant="h4" sx={{ fontWeight: 700, color: '#22c55e' }}>
                         {formatRupiah(stats.totalPemasukan)}
                       </TextNoCursor>
+                      <ActionButton
+                        size="small"
+                        sx={{ mt: 2 }}
+                        onClick={() => router.push('/bendahara/dashboard')}
+                      >
+                        Lihat Detail
+                      </ActionButton>
                     </CardContent>
                   </FinancialCard>
                 </Grid>
@@ -394,12 +399,19 @@ export default function Dashboard() {
                       <TextNoCursor variant="h4" sx={{ fontWeight: 700, color: '#ef4444' }}>
                         {formatRupiah(stats.totalPengeluaran)}
                       </TextNoCursor>
+                      <ActionButton
+                        size="small"
+                        sx={{ mt: 2 }}
+                        onClick={() => router.push('/bendahara/dashboard')}
+                      >
+                        Lihat Detail
+                      </ActionButton>
                     </CardContent>
                   </FinancialCard>
                 </Grid>
               </Grid>
 
-              {/* Baris Bawah: Tabel Surat Masuk dan Keluar */}
+              {/* Baris Bawah: Tabel Surat Masuk, Keluar, dan Permohonan */}
               <Box sx={{ mt: 4 }}>
                 <TextNoCursor variant="h6" sx={{ fontWeight: 600, color: '#1a237e', mb: 2 }}>
                   Statistik Surat
@@ -415,13 +427,15 @@ export default function Dashboard() {
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {paginatedSurat.map((item) => (
-                          <TableRow key={item.jenis}>
+                        {filteredSurat.map((item) => (
+                          <StyledTableRow key={item.jenis}>
                             <TableCell sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               {item.jenis === 'Surat Masuk' ? (
                                 <MailIcon sx={{ color: '#3b82f6' }} />
-                              ) : (
+                              ) : item.jenis === 'Surat Keluar' ? (
                                 <SendIcon sx={{ color: '#f59e0b' }} />
+                              ) : (
+                                <AssignmentIcon sx={{ color: '#10b981' }} />
                               )}
                               {item.jenis}
                             </TableCell>
@@ -434,40 +448,33 @@ export default function Dashboard() {
                                 Lihat Detail
                               </ActionButton>
                             </TableCell>
-                          </TableRow>
+                          </StyledTableRow>
                         ))}
                       </TableBody>
                     </Table>
                   </TableContainer>
-                  <TablePagination
-                    rowsPerPageOptions={[5, 10, 25]}
-                    component="div"
-                    count={filteredSurat.length}
-                    rowsPerPage={rowsPerPage}
-                    page={page}
-                    onPageChange={handleChangePage}
-                    onRowsPerPageChange={handleChangeRowsPerPage}
-                  />
                 </TableCard>
 
                 {/* Kartu untuk Mobile */}
                 <Stack spacing={2} sx={{ display: { xs: 'block', sm: 'none' } }}>
-                  {paginatedSurat.map((item) => (
+                  {filteredSurat.map((item) => (
                     <DashboardCard key={item.jenis}>
                       <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                           <StatIcon>
                             {item.jenis === 'Surat Masuk' ? (
                               <MailIcon sx={{ fontSize: 36, color: '#3b82f6' }} />
-                            ) : (
+                            ) : item.jenis === 'Surat Keluar' ? (
                               <SendIcon sx={{ fontSize: 36, color: '#f59e0b' }} />
+                            ) : (
+                              <AssignmentIcon sx={{ fontSize: 36, color: '#10b981' }} />
                             )}
                           </StatIcon>
                           <Box>
                             <TextNoCursor variant="h6" color="textSecondary">
                               {item.jenis}
                             </TextNoCursor>
-                            <TextNoCursor variant="h4" sx={{ fontWeight: 700, color: item.jenis === 'Surat Masuk' ? '#3b82f6' : '#f59e0b' }}>
+                            <TextNoCursor variant="h4" sx={{ fontWeight: 700, color: item.jenis === 'Surat Masuk' ? '#3b82f6' : item.jenis === 'Surat Keluar' ? '#f59e0b' : '#10b981' }}>
                               {item.jumlah}
                             </TextNoCursor>
                           </Box>
@@ -481,16 +488,17 @@ export default function Dashboard() {
                       </CardContent>
                     </DashboardCard>
                   ))}
-                  <TablePagination
-                    rowsPerPageOptions={[5, 10, 25]}
-                    component="div"
-                    count={filteredSurat.length}
-                    rowsPerPage={rowsPerPage}
-                    page={page}
-                    onPageChange={handleChangePage}
-                    onRowsPerPageChange={handleChangeRowsPerPage}
-                  />
                 </Stack>
+              </Box>
+
+              {/* Tombol ke Sekretaris Dashboard */}
+              <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+                <ActionButton
+                  startIcon={<AdminPanelSettingsIcon />}
+                  onClick={() => router.push('/sekretaris/dashboard')}
+                >
+                  Buka Dashboard Sekretaris
+                </ActionButton>
               </Box>
             </>
           )}
@@ -510,16 +518,6 @@ export default function Dashboard() {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Tutup</Button>
-          <Button
-            onClick={() => {
-              router.push(dialogContent?.path)
-              handleCloseDialog()
-            }}
-            variant="contained"
-            sx={{ backgroundColor: '#1a237e', '&:hover': { backgroundColor: '#0d47a1' } }}
-          >
-            Buka Halaman
-          </Button>
         </DialogActions>
       </Dialog>
     </Box>

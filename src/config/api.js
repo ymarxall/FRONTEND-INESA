@@ -1,8 +1,8 @@
 // src/config/api.js
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
-const SEKRETARIS_API_BASE_URL = process.env.NEXT_PUBLIC_SEKRETARIS_API_BASE_URL || 'http://localhost:8081';
+const SEKRETARIS_API_BASE_URL = process.env.NEXT_PUBLIC_SEKRETARIS_API_BASE_URL || 'http://192.168.1.85:8088/api';
 const PRODUCTION_API_BASE_URL = process.env.NEXT_PUBLIC_PRODUCTION_API_BASE_URL || 'https://joyful-analysis-production.up.railway.app';
-
+export const UPLOAD_URL = `${API_BASE_URL}/uploads/`;
 export const API_ENDPOINTS = {
   // Endpoint umum (autentikasi)
   LOGIN: `${API_BASE_URL}/api/user/login`,
@@ -66,6 +66,7 @@ export const API_ENDPOINTS = {
     SUMBANGAN_GET_ALL: `${PRODUCTION_API_BASE_URL}/api/sumbangan/all`,
     SUMBANGAN_IMAGE: (filename) => `${PRODUCTION_API_BASE_URL}/api/image/sumbangan/${filename}`,
     SUMBANGAN_DELETE: (id) => `${PRODUCTION_API_BASE_URL}/api/sumbangan/delete/${id}`,
+    UPLOAD_URL: `${PRODUCTION_API_BASE_URL}/api/uploads/`,
   },
 };
 

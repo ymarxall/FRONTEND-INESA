@@ -712,6 +712,7 @@ export default function DataPegawai() {
               error={showAlert && !adminRole}
             >
               <MenuItem value="">Pilih Role</MenuItem>
+              <MenuItem value="ROLE000">Admin</MenuItem>
               <MenuItem value="ROLE001">Bendahara</MenuItem>
               <MenuItem value="ROLE002">Sekretaris</MenuItem>
             </Select>

@@ -53,7 +53,7 @@ const Gallery = () => {
                     mb: 4
                 }}
             >
-                Galeri Desa Kalukuang
+                Galeri Desa Bontomanai
             </Typography>
 
             <Carousel
@@ -125,7 +125,8 @@ const Gallery = () => {
                             bgcolor: 'rgba(0,0,0,0.5)',
                             color: 'white',
                             p: 3,
-                            backdropFilter: 'blur(4px)'
+                            backdropFilter: 'blur(4px)',
+                            textAlign: 'center' // Memusatkan teks secara horizontal
                         }}>
                             <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
                                 {item.title}

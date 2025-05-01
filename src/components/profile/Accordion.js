@@ -44,12 +44,12 @@ const FAQSuratDesa = () => {
                   expandIcon={<ExpandMoreIcon />}
                   sx={{ bgcolor: 'background.paper' }}
                 >
-                  <Typography variant="h5" className="faq-question">
+                  <Typography variant="h5" className="faq-question" sx={{ fontWeight: 'bold' }}>
                     {faq.question}
                   </Typography>
                 </AccordionSummary>
                 <AccordionDetails sx={{ bgcolor: 'background.paper' }}>
-                  <Typography variant="body1" className="faq-answer">
+                  <Typography sx={{ fontSize: '14px', lineHeight: '28px' }} className="faq-answer">
                     {faq.answer}
                   </Typography>
                 </AccordionDetails>

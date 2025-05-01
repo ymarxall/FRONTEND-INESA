@@ -67,6 +67,7 @@ export default function DataPenduduk() {
     jenis_kelamin: '',
     pendidikan: '',
     pekerjaan: '',
+    pekerjaanLainnya: '', // State baru untuk pekerjaan manual
     agama: '',
     status_pernikahan: '',
     kewarganegaraan: ''
@@ -196,6 +197,7 @@ export default function DataPenduduk() {
       jenis_kelamin: '',
       pendidikan: '',
       pekerjaan: '',
+      pekerjaanLainnya: '',
       agama: '',
       status_pernikahan: '',
       kewarganegaraan: ''
@@ -206,6 +208,11 @@ export default function DataPenduduk() {
   const handleEdit = (row) => {
     console.log('[EDIT] Mengedit data:', row)
     setEditingId(row.id)
+    const validPekerjaan = [
+      'Belum Bekerja', 'Pelajar/Mahasiswa', 'Petani', 'Nelayan', 'PNS', 'TNI/Polri', 'Karyawan Swasta',
+      'Wiraswasta', 'Buruh', 'Pensiunan', 'Ibu Rumah Tangga', 'Lainnya'
+    ]
+    const isPekerjaanLainnya = !validPekerjaan.includes(row.pekerjaan) && row.pekerjaan !== '-'
     setFormData({
       nik: row.nik || '',
       nama_lengkap: row.nama_lengkap || '',
@@ -213,7 +220,8 @@ export default function DataPenduduk() {
       tanggal_lahir: row.tanggal_lahir || '',
       jenis_kelamin: row.jenis_kelamin || '',
       pendidikan: row.pendidikan || '',
-      pekerjaan: row.pekerjaan || '',
+      pekerjaan: isPekerjaanLainnya ? 'Lainnya' : row.pekerjaan || '',
+      pekerjaanLainnya: isPekerjaanLainnya ? row.pekerjaan : '',
       agama: row.agama || '',
       status_pernikahan: row.status_pernikahan || '',
       kewarganegaraan: row.kewarganegaraan || ''
@@ -276,7 +284,7 @@ export default function DataPenduduk() {
   }
 
   const handleSave = async () => {
-    const { nik, nama_lengkap, tempat_lahir, tanggal_lahir, jenis_kelamin, pendidikan, pekerjaan, agama, status_pernikahan, kewarganegaraan } = formData
+    const { nik, nama_lengkap, tempat_lahir, tanggal_lahir, jenis_kelamin, pendidikan, pekerjaan, pekerjaanLainnya, agama, status_pernikahan, kewarganegaraan } = formData
 
     if (!nik || !nama_lengkap || !tempat_lahir || !tanggal_lahir || !jenis_kelamin || !pendidikan || !pekerjaan || !agama || !status_pernikahan || !kewarganegaraan) {
       showAlertMessage('Semua field wajib diisi', 'error')
@@ -294,10 +302,36 @@ export default function DataPenduduk() {
       return
     }
 
-    const validStatus = ['Belum Menikah', 'Menikah', 'Cerai', 'Janda/Duda']
+    const validStatus = ['Belum Menikah', 'Menikah', 'Cerai Mati', 'Cerai Hidup']
     if (!validStatus.includes(status_pernikahan)) {
       showAlertMessage('Pilih status pernikahan yang valid', 'error')
-  return
+      return
+    }
+
+    const validPendidikan = ['Tidak Sekolah', 'SD', 'SMP', 'SMA', 'SMK', 'D1', 'D2', 'D3', 'S1', 'S2', 'S3']
+    if (!validPendidikan.includes(pendidikan)) {
+      showAlertMessage('Pilih pendidikan yang valid', 'error')
+      return
+    }
+
+    const validPekerjaan = [
+      'Belum Bekerja', 'Pelajar/Mahasiswa', 'Petani', 'Nelayan', 'PNS', 'TNI/Polri', 'Karyawan Swasta',
+      'Wiraswasta', 'Buruh', 'Pensiunan', 'Ibu Rumah Tangga', 'Lainnya'
+    ]
+    if (!validPekerjaan.includes(pekerjaan)) {
+      showAlertMessage('Pilih pekerjaan yang valid', 'error')
+      return
+    }
+
+    if (pekerjaan === 'Lainnya' && !pekerjaanLainnya) {
+      showAlertMessage('Masukkan pekerjaan lainnya', 'error')
+      return
+    }
+
+    const validKewarganegaraan = ['WNI', 'WNA']
+    if (!validKewarganegaraan.includes(kewarganegaraan)) {
+      showAlertMessage('Pilih kewarganegaraan yang valid', 'error')
+      return
     }
 
     try {
@@ -310,14 +344,19 @@ export default function DataPenduduk() {
       }
       const endpoint = editingId ? `http://localhost:8080/api/warga/${editingId}` : 'http://localhost:8080/api/warga'
       const method = editingId ? 'PUT' : 'POST'
-      console.log('[SAVE] Mengirim data:', formData, 'ke endpoint:', endpoint)
+      const dataToSend = {
+        ...formData,
+        pekerjaan: pekerjaan === 'Lainnya' ? pekerjaanLainnya : pekerjaan
+      }
+      delete dataToSend.pekerjaanLainnya // Hapus field tambahan dari data yang dikirim
+      console.log('[SAVE] Mengirim data:', dataToSend, 'ke endpoint:', endpoint)
       const res = await fetchWithTimeout(endpoint, {
         method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(dataToSend),
         credentials: 'include'
       }, 10000)
 
@@ -348,6 +387,7 @@ export default function DataPenduduk() {
         jenis_kelamin: '',
         pendidikan: '',
         pekerjaan: '',
+        pekerjaanLainnya: '',
         agama: '',
         status_pernikahan: '',
         kewarganegaraan: ''
@@ -545,6 +585,7 @@ export default function DataPenduduk() {
           <TextField
             label="Pendidikan"
             name="pendidikan"
+            select
             value={formData.pendidikan}
             onChange={handleInputChange}
             fullWidth
@@ -553,10 +594,23 @@ export default function DataPenduduk() {
             disabled={loading}
             error={showAlert && !formData.pendidikan}
             helperText={showAlert && !formData.pendidikan ? 'Pendidikan wajib diisi' : ''}
-          />
+          >
+            <MenuItem value="Tidak Sekolah">Tidak Sekolah</MenuItem>
+            <MenuItem value="SD">SD</MenuItem>
+            <MenuItem value="SMP">SMP</MenuItem>
+            <MenuItem value="SMA">SMA</MenuItem>
+            <MenuItem value="SMK">SMK</MenuItem>
+            <MenuItem value="D1">D1</MenuItem>
+            <MenuItem value="D2">D2</MenuItem>
+            <MenuItem value="D3">D3</MenuItem>
+            <MenuItem value="S1">S1</MenuItem>
+            <MenuItem value="S2">S2</MenuItem>
+            <MenuItem value="S3">S3</MenuItem>
+          </TextField>
           <TextField
             label="Pekerjaan"
             name="pekerjaan"
+            select
             value={formData.pekerjaan}
             onChange={handleInputChange}
             fullWidth
@@ -565,7 +619,34 @@ export default function DataPenduduk() {
             disabled={loading}
             error={showAlert && !formData.pekerjaan}
             helperText={showAlert && !formData.pekerjaan ? 'Pekerjaan wajib diisi' : ''}
-          />
+          >
+            <MenuItem value="Belum Bekerja">Belum Bekerja</MenuItem>
+            <MenuItem value="Pelajar/Mahasiswa">Pelajar/Mahasiswa</MenuItem>
+            <MenuItem value="Petani">Petani</MenuItem>
+            <MenuItem value="Nelayan">Nelayan</MenuItem>
+            <MenuItem value="PNS">PNS</MenuItem>
+            <MenuItem value="TNI/Polri">TNI/Polri</MenuItem>
+            <MenuItem value="Karyawan Swasta">Karyawan Swasta</MenuItem>
+            <MenuItem value="Wiraswasta">Wiraswasta</MenuItem>
+            <MenuItem value="Buruh">Buruh</MenuItem>
+            <MenuItem value="Pensiunan">Pensiunan</MenuItem>
+            <MenuItem value="Ibu Rumah Tangga">Ibu Rumah Tangga</MenuItem>
+            <MenuItem value="Lainnya">Lainnya</MenuItem>
+          </TextField>
+          {formData.pekerjaan === 'Lainnya' && (
+            <TextField
+              label="Pekerjaan Lainnya"
+              name="pekerjaanLainnya"
+              value={formData.pekerjaanLainnya}
+              onChange={handleInputChange}
+              fullWidth
+              required
+              margin="normal"
+              disabled={loading}
+              error={showAlert && !formData.pekerjaanLainnya}
+              helperText={showAlert && !formData.pekerjaanLainnya ? 'Pekerjaan lainnya wajib diisi' : ''}
+            />
+          )}
           <TextField
             label="Agama"
             name="agama"
@@ -601,12 +682,13 @@ export default function DataPenduduk() {
           >
             <MenuItem value="Belum Menikah">Belum Menikah</MenuItem>
             <MenuItem value="Menikah">Menikah</MenuItem>
-            <MenuItem value="Cerai">Cerai</MenuItem>
-            <MenuItem value="Janda/Duda">Janda/Duda</MenuItem>
+            <MenuItem value="Cerai Mati">Cerai Mati</MenuItem>
+            <MenuItem value="Cerai Hidup">Cerai Hidup</MenuItem>
           </TextField>
           <TextField
             label="Kewarganegaraan"
             name="kewarganegaraan"
+            select
             value={formData.kewarganegaraan}
             onChange={handleInputChange}
             fullWidth
@@ -615,7 +697,10 @@ export default function DataPenduduk() {
             disabled={loading}
             error={showAlert && !formData.kewarganegaraan}
             helperText={showAlert && !formData.kewarganegaraan ? 'Kewarganegaraan wajib diisi' : ''}
-          />
+          >
+            <MenuItem value="WNI">WNI</MenuItem>
+            <MenuItem value="WNA">WNA</MenuItem>
+          </TextField>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowModal(false)} disabled={loading}>

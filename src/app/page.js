@@ -2,8 +2,8 @@
 
 import Navbar from "@/components/profile/Navbar"
 import Home from "@/components/profile/Home"
-import Pizza from "@/components/profile/Pizza"
-import Pasta from "@/components/profile/Pasta"
+import Pizza from "@/components/profile/Prodes"
+import Pasta from "@/components/profile/Vimis"
 import About from "@/components/profile/About"
 import Location from "@/components/profile/Location"
 import FAQSuratDesa from "@/components/profile/Accordion"
@@ -11,6 +11,7 @@ import FeatureCard from "@/components/profile/FeatureCard"
 import Gallery from "@/components/profile/Gallery"
 import StrukturDesaCard from "@/components/profile/StrukturDesa"
 import StatistikPenduduk from "@/components/profile/JumlahPenduduk"
+import Footer from "@/components/profile/Footer"
 
 import { createTheme, responsiveFontSizes, ThemeProvider } from "@mui/material"
 
@@ -37,6 +38,7 @@ export default function Desa() {
                 <StatistikPenduduk />
                 <FAQSuratDesa />
                 <Location />
+                <Footer />
             </div>
         </ThemeProvider>
     )
