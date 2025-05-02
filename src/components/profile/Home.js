@@ -159,7 +159,7 @@ const Home = () => {
     }
     setSedangMencariNIK(true);
     try {
-      const response = await fetch(`http://localhost:8080/api/request/warga/${nik}`);
+      const response = await fetch(`http://192.168.1.85:8080/api/request/warga/${nik}`);
       const responseText = await response.text();
       if (!response.ok) {
         if (response.status === 404) {
@@ -289,7 +289,7 @@ const Home = () => {
         tanggal_kematian: formData.tgl_kematian || undefined,
         penyebab_kematian: formData.penyebab_kematian || undefined,
       };
-      const response = await fetch('http://localhost:8080/api/request/surat', {
+      const response = await fetch('http://192.168.1.85:8080/api/request/surat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(dataToSend),
