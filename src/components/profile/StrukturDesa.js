@@ -1,173 +1,201 @@
-import React from 'react';
-import {
-    Box,
-    Typography,
-    Card,
-    CardContent,
-    Avatar,
-    Grid,
-    Container,
-    Divider,
-    Chip,
-    Paper
-} from '@mui/material';
-import {
-    Person as PersonIcon,
-    Groups as TeamIcon,
-    Home as VillageIcon,
-    Star as LeaderIcon
-} from '@mui/icons-material';
+import React, { useRef } from 'react';
+import { Box, Typography, Card, Avatar, Container, IconButton } from '@mui/material';
+import { ArrowLeft, ArrowRight } from '@mui/icons-material';
+import { motion } from 'framer-motion';
 
 const strukturDesa = {
-    periode: "2021-2026",
-    kepengurusan: [
-        {
-            jabatan: "Kepala Desa",
-            nama: "SUDIRMAN TATU, S.Pd",
-            foto: "/pengurus/kades.png",
-            deskripsi: "Memimpin penyelenggaraan pemerintahan desa"
-        },
-        {
-            jabatan: "Sekretaris Desa",
-            nama: "BAHTIAR, S.KOM. S.Pd",
-            foto: "/pengurus/sekretaris.jpg",
-            deskripsi: "Mengelola administrasi dan dokumen desa"
-        },
-        {
-            jabatan: "Bendahara Desa",
-            nama: "YUYUN ULFIAH ASDIAN",
-            foto: "/pengurus/bendahara.jpg",
-            deskripsi: "Mengelola keuangan dan aset desa"
-        },
-        {
-            jabatan: "Kasi Pemerintahan",
-            nama: "SUPARDI GASA",
-            foto: "/pengurus/kasi.jpg",
-            deskripsi: "Menangani urusan pemerintahan"
-        },
-        {
-            jabatan: "Kasi Pembangunan",
-            nama: "HADALIA DG. CAYA",
-            foto: "/pengurus/kasi2.jpg",
-            deskripsi: "Mengawasi pembangunan infrastruktur"
-        },
-        {
-            jabatan: "Kasi Kemasyarakatan",
-            nama: "JUMIATI",
-            foto: "/pengurus/kasi3.jpg",
-            deskripsi: "Menangani program masyarakat"
-        }
-    ]
+  periode: "2021-2026",
+  kepengurusan: [
+    {
+      jabatan: "KEPALA DESA",
+      nama: "NURLENI",
+      foto: "/pengurus/kepala-desa.jpg",
+    },
+    {
+      jabatan: "SEKRETARIS",
+      nama: "NOVIANTI",
+      foto: "/pengurus/sekretaris.jpg",
+    },
+    {
+      jabatan: "BENDAHARA",
+      nama: "PATTOLA DG BALI",
+      foto: "/pengurus/bendahara.jpg",
+    },
+    {
+      jabatan: "KASI PEMERINTAHAN",
+      nama: "MUHAMMAD SAKIR",
+      foto: "/pengurus/kasi-pemerintahan.jpg",
+    },
+    {
+      jabatan: "KASI PEMBANGUNAN",
+      nama: "HADALIA DG. CAYA",
+      foto: "/pengurus/kasi-pembangunan.jpg",
+    },
+  ],
 };
 
 const StrukturDesaCard = () => {
-    return (
-        <Container maxWidth="lg" sx={{ py: 4 }}>
-            {/* Header */}
-            <Paper elevation={0} sx={{
-                p: 3,
-                mb: 4,
-                textAlign: 'center',
-                bgcolor: 'primary.light',
-                color: 'primary.contrastText'
-            }}>
-                <TeamIcon sx={{ fontSize: 50, mb: 2 }} />
-                <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
-                    Struktur Organisasi Desa
-                </Typography>
-                <Typography variant="h6">
-                    Pemerintah Desa Kalukuang Periode {strukturDesa.periode}
-                </Typography>
-            </Paper>
+  const scrollRef = useRef(null);
 
-            {/* Kartu Kepengurusan */}
-            <Grid container spacing={3}>
-                {strukturDesa.kepengurusan.map((petugas, index) => (
-                    <Grid item xs={12} sm={6} md={4} key={index}>
-                        <Card sx={{
-                            height: '100%',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            transition: 'transform 0.3s',
-                            '&:hover': {
-                                transform: 'translateY(-5px)',
-                                boxShadow: 3
-                            }
-                        }}>
-                            <Box sx={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                pt: 3,
-                                pb: 1,
-                                bgcolor: index === 0 ? 'primary.main' : 'background.paper',
-                                color: index === 0 ? 'primary.contrastText' : 'text.primary'
-                            }}>
-                                <Avatar
-                                    alt={petugas.nama}
-                                    src={petugas.foto}
-                                    sx={{
-                                        width: 80,
-                                        height: 80,
-                                        border: `3px solid ${index === 0 ? '#fff' : '#1976d2'}`,
-                                        mb: 2
-                                    }}
-                                />
-                            </Box>
+  const scrollLeft = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollLeft -= 300;
+    }
+  };
 
-                            <CardContent sx={{ flexGrow: 1 }}>
-                                <Typography
-                                    variant="h6"
-                                    component="div"
-                                    align="center"
-                                    sx={{
-                                        fontWeight: 'bold',
-                                        mb: 1
-                                    }}
-                                >
-                                    {petugas.nama}
-                                </Typography>
+  const scrollRight = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollLeft += 300;
+    }
+  };
 
-                                <Chip
-                                    label={petugas.jabatan}
-                                    color={index === 0 ? 'primary' : 'default'}
-                                    variant={index === 0 ? 'filled' : 'outlined'}
-                                    sx={{
-                                        mb: 2,
-                                        mx: 'auto',
-                                        display: 'flex'
-                                    }}
-                                />
+  return (
+    <Container maxWidth="lg" sx={{ py: 6 }}>
+      {/* Header */}
+      <Box sx={{ mb: 4, textAlign: 'center' }}>
+        <Typography
+          variant="h3"
+          component="h1"
+          gutterBottom
+          sx={{ fontWeight: 'bold', color: 'rgba(2, 132, 199, 0.9)', fontSize: { xs: '2rem', md: '3rem' } }}
+        >
+          Struktur Organisasi
+        </Typography>
+      </Box>
 
-                                <Divider sx={{ my: 2 }} />
+      {/* Daftar Pengurus dengan Navigasi Panah */}
+      <Box sx={{ position: 'relative' }}>
+        {/* Tombol Panah Kiri */}
+        <IconButton
+          onClick={scrollLeft}
+          sx={{
+            position: 'absolute',
+            left: -20,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            bgcolor: 'rgba(2, 132, 199, 0.9)',
+            color: 'white',
+            zIndex: 1,
+            '&:hover': {
+              bgcolor: 'rgba(2, 132, 199, 1)',
+              transform: 'translateY(-50%) scale(1.1)',
+            },
+            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+          }}
+        >
+          <ArrowLeft />
+        </IconButton>
 
-                                <Typography
-                                    variant="body2"
-                                    color="text.secondary"
-                                    align="center"
-                                >
-                                    {petugas.deskripsi}
-                                </Typography>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-                ))}
-            </Grid>
+        {/* Daftar Kartu */}
+        <Box
+          ref={scrollRef}
+          sx={{
+            display: 'flex',
+            overflowX: 'auto',
+            gap: 3,
+            pb: 2,
+            scrollBehavior: 'smooth',
+            '&::-webkit-scrollbar': {
+              display: 'none',
+            },
+            msOverflowStyle: 'none', // Fixed: Changed from '-ms-overflow-style'
+            scrollbarWidth: 'none',  // Fixed: Changed from 'scrollbar-width'
+          }}
+        >
+          {strukturDesa.kepengurusan?.length > 0 ? (
+            strukturDesa.kepengurusan.map((petugas, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
+                <Card
+                  sx={{
+                    flex: '0 0 auto',
+                    width: 260,
+                    textAlign: 'center',
+                    borderRadius: 4,
+                    overflow: 'hidden',
+                    boxShadow: '0 6px 16px rgba(0,0,0,0.1)',
+                    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                    '&:hover': {
+                      transform: 'scale(1.05)',
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                    },
+                  }}
+                >
+                  <Box sx={{ p: 4 }}>
+                    <Avatar
+                      alt={petugas.nama}
+                      src={petugas.foto}
+                      sx={{
+                        width: 160,
+                        height: 160,
+                        mx: 'auto',
+                        mb: 2,
+                        border: '4px solid rgba(2, 132, 199, 0.9)',
+                      }}
+                    />
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        fontWeight: 'bold',
+                        color: '#333',
+                        mb: 1,
+                        textTransform: 'uppercase',
+                        fontSize: '1.1rem',
+                      }}
+                    >
+                      {petugas.nama}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ bgcolor: 'rgba(2, 132, 199, 0.9)', p: 2 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: 'white',
+                        textTransform: 'uppercase',
+                        fontSize: '0.9rem',
+                        fontWeight: 'medium',
+                      }}
+                    >
+                      {petugas.jabatan}
+                    </Typography>
+                  </Box>
+                </Card>
+              </motion.div>
+            ))
+          ) : (
+            <Typography variant="body2" sx={{ color: 'white', textAlign: 'center', width: '100%' }}>
+              Tidak ada data pengurus.
+            </Typography>
+          )}
+        </Box>
 
-            {/* Catatan */}
-            <Paper elevation={0} sx={{
-                p: 2,
-                mt: 4,
-                bgcolor: 'background.default',
-                borderLeft: '4px solid',
-                borderColor: 'primary.main'
-            }}>
-                <Typography variant="body2" fontStyle="italic">
-                    * Struktur organisasi ini diperbarui terakhir pada Januari 2024
-                </Typography>
-            </Paper>
-        </Container>
-    );
+        {/* Tombol Panah Kanan */}
+        <IconButton
+          onClick={scrollRight}
+          sx={{
+            position: 'absolute',
+            right: -20,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            bgcolor: 'rgba(2, 132, 199, 0.9)',
+            color: 'white',
+            zIndex: 1,
+            '&:hover': {
+              bgcolor: 'rgba(2, 132, 199, 1)',
+              transform: 'translateY(-50%) scale(1.1)',
+            },
+            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+          }}
+        >
+          <ArrowRight />
+        </IconButton>
+      </Box>
+    </Container>
+  );
 };
 
 export default StrukturDesaCard;

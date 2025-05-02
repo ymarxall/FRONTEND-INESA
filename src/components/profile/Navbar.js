@@ -20,10 +20,17 @@ const Navbar = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
+      const isScrolled = window.scrollY > 50;
+      setScrolled(isScrolled);
+      console.log('Scroll position:', window.scrollY, 'Scrolled state:', isScrolled);
     };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll(); // Panggil sekali saat komponen dimuat untuk set state awal
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   const handleOpenNavMenu = (event) => {
@@ -53,13 +60,15 @@ const Navbar = () => {
       transition={{ duration: 0.5 }}
     >
       <AppBar
-        position="sticky"
+        position="fixed"
         sx={{
-          background: 'rgba(2, 132, 199, 0.9)',
-          backdropFilter: 'blur(10px)',
-          boxShadow: scrolled ? '0 4px 12px rgba(0,0,0,0.2)' : '0 2px 4px rgba(0,0,0,0.1)',
+          top: 0,
+          width: '100%',
+          background: scrolled ? 'rgba(2, 132, 199, 0.9)' : 'transparent',
+          backdropFilter: scrolled ? 'blur(10px)' : 'none',
+          boxShadow: scrolled ? '0 4px 12px rgba(0,0,0,0.2)' : 'none',
           height: 56,
-          transition: 'box-shadow 0.3s ease',
+          transition: 'background 0.3s ease, box-shadow 0.3s ease, backdrop-filter 0.3s ease',
           zIndex: 1000,
         }}
       >
@@ -73,9 +82,9 @@ const Navbar = () => {
               />
               <Typography
                 variant="h6"
-                sx={{ fontWeight: 700, color: 'white', fontSize: '1.25rem' }}
+                sx={{ fontWeight: 700, color: scrolled ? 'white' : '#333', fontSize: '1.25rem' }}
               >
-                Desa Kalukuang
+                Desa Bontomanai
               </Typography>
             </Box>
 
@@ -83,7 +92,7 @@ const Navbar = () => {
               <IconButton
                 size="medium"
                 onClick={handleOpenNavMenu}
-                color="inherit"
+                sx={{ color: scrolled ? 'white' : '#333' }}
               >
                 <MenuIcon fontSize="medium" />
               </IconButton>
@@ -98,19 +107,21 @@ const Navbar = () => {
               >
                 {pages.map((page) => (
                   <MenuItem key={page.name} onClick={() => handleNavClick(page.id)}>
-                    <Typography textAlign="center" sx={{ fontSize: '0.875rem' }}>{page.name}</Typography>
+                    <Typography textAlign="center" sx={{ fontSize: '0.875rem', color: '#333' }}>
+                      {page.name}
+                    </Typography>
                   </MenuItem>
                 ))}
               </Menu>
             </Box>
 
-            <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, justifyContent: 'center', gap: 1.5 }}>
+            <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, justifyContent: 'flex-start', marginLeft: 8, gap: 1.5 }}>
               {pages.map((page) => (
                 <Button
                   key={page.name}
                   onClick={() => handleNavClick(page.id)}
                   sx={{
-                    color: 'white',
+                    color: scrolled ? 'white' : '#333',
                     fontWeight: 700,
                     fontSize: '0.875rem',
                     borderRadius: '16px',
@@ -118,8 +129,8 @@ const Navbar = () => {
                     py: 0.5,
                     transition: 'all 0.3s ease',
                     '&:hover': {
-                      bgcolor: '#38bdf8',
-                      color: 'white',
+                      bgcolor: scrolled ? '#38bdf8' : 'rgba(0, 0, 0, 0.1)',
+                      color: scrolled ? 'white' : '#333',
                       transform: 'scale(1.1)',
                     },
                   }}
@@ -134,17 +145,17 @@ const Navbar = () => {
                 variant="outlined"
                 onClick={handleLogin}
                 sx={{
-                  borderColor: 'white',
-                  color: 'white',
+                  borderColor: scrolled ? 'white' : '#333',
+                  color: scrolled ? 'white' : '#333',
                   borderRadius: '16px',
                   px: 2,
                   py: 0.5,
                   fontWeight: 700,
                   fontSize: '0.875rem',
                   '&:hover': {
-                    bgcolor: '#38bdf8',
-                    color: 'white',
-                    borderColor: '#38bdf8',
+                    bgcolor: scrolled ? '#38bdf8' : 'rgba(0, 0, 0, 0.1)',
+                    color: scrolled ? 'white' : '#333',
+                    borderColor: scrolled ? '#38bdf8' : '#333',
                     transform: 'scale(1.1)',
                   },
                 }}

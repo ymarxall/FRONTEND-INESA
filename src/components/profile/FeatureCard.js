@@ -31,7 +31,7 @@ const FeatureCard = () => {
   const services = [
     {
       title: 'Profile Desa',
-      description: 'Informasi lengkap tentang Desa Kalukuang termasuk sejarah, visi misi, dan struktur pemerintahan.',
+      description: 'Informasi lengkap tentang Desa Bontomanai termasuk sejarah, visi misi, dan struktur pemerintahan.',
       icon: <ProfileIcon />,
       color: '#4caf50',
     },

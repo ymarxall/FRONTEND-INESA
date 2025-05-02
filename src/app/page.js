@@ -2,8 +2,8 @@
 
 import Navbar from "@/components/profile/Navbar"
 import Home from "@/components/profile/Home"
-import Pizza from "@/components/profile/Pizza"
-import Pasta from "@/components/profile/Pasta"
+import Pizza from "@/components/profile/Prodes"
+import Pasta from "@/components/profile/Vimis"
 import About from "@/components/profile/About"
 import Location from "@/components/profile/Location"
 import FAQSuratDesa from "@/components/profile/Accordion"

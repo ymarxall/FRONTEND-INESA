@@ -27,7 +27,7 @@ const Pizza = () => {
               >
                 <Box
                   sx={{
-                    backgroundImage: 'url(https://unsplash.com/photos/man-in-orange-shirt-riding-red-and-black-mountain-bike-on-green-grass-field-during-daytime-n9AUNCuGy6A)',
+                    backgroundImage: 'url(/desa4.jpeg)',
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     borderRadius: '12px',
@@ -36,7 +36,6 @@ const Pizza = () => {
                   }}
                 />
                 <Typography variant="body2" className="image-credit" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                   <a href="https://unsplash.com/" target="_blank"></a>.
                 </Typography>
               </motion.div>
             </Grid>
@@ -47,15 +46,16 @@ const Pizza = () => {
                 transition={{ duration: 1, delay: 0.2 }}
               >
                 <Box sx={{ px: 2 }}>
-                  <Typography variant="h4" align="left" gutterBottom sx={{ color: 'text.primary', fontSize: '1.75rem' }}>
-                    Desa Kalukuang
-                  </Typography>
-                  <Typography variant="body1" align="left" paragraph sx={{ color: 'text.primary', fontSize: '0.875rem' }}>
-                    <strong>Desa Kalukuang</strong> merupakan salah satu desa yang terletak di Kecamatan Bangkala, Kabupaten Jeneponto, Sulawesi Selatan. Desa ini dikenal dengan suasana pedesaan yang asri, dihiasi hamparan sawah dan kebun yang membentang luas. Masyarakat di Kalukuang hidup dengan budaya gotong royong yang masih sangat kental, menjadikan desa ini tidak hanya kaya secara alamiah, tetapi juga dalam nilai-nilai sosialnya. Selain itu, posisi geografis Kalukuang yang cukup strategis memudahkan akses ke berbagai wilayah sekitar di Jeneponto.
-                  </Typography>
-                  <Typography variant="body1" align="left" paragraph sx={{ color: 'text.primary', fontSize: '0.875rem' }}>
-                    Mayoritas penduduk Desa Kalukuang bermata pencaharian sebagai petani dan peternak. Komoditas utama yang dihasilkan dari desa ini antara lain padi, jagung, dan berbagai hasil perkebunan seperti pisang dan kelapa. Di bidang peternakan, sapi dan kambing menjadi hewan ternak yang cukup banyak dipelihara. Selain bertani dan beternak, beberapa warga juga mengembangkan usaha kecil seperti kerajinan tangan dan perdagangan hasil bumi, yang membantu meningkatkan perekonomian desa.
-                  </Typography>
+                <Typography variant="h4" align="left" gutterBottom sx={{ color: 'text.primary', fontSize: '1.75rem' }}>
+                  Desa Bontomanai
+                </Typography>
+                <Typography variant="body1" align="left" paragraph sx={{ color: 'text.primary', fontSize: '0.875rem' }}>
+                  <strong>Desa Bontomanai</strong> merupakan salah satu desa yang terletak di Kecamatan Rumbia, Kabupaten Jeneponto, Sulawesi Selatan. Desa ini memiliki suasana pedesaan yang tenang dan alami, dengan hamparan sawah dan kebun yang menjadi ciri khas wilayahnya. Kehidupan masyarakat di Bontomanai masih sangat menjunjung tinggi nilai-nilai gotong royong, mencerminkan kekayaan budaya sosial yang tetap terjaga di tengah perkembangan zaman. Letak geografisnya yang strategis juga memberikan kemudahan akses menuju wilayah-wilayah lain di sekitar Kecamatan Rumbia.
+                </Typography>
+                <Typography variant="body1" align="left" paragraph sx={{ color: 'text.primary', fontSize: '0.875rem' }}>
+                  Mayoritas penduduk Desa Bontomanai bermata pencaharian sebagai petani dan peternak. Padi dan jagung merupakan komoditas pertanian utama yang dihasilkan, ditambah dengan hasil perkebunan seperti pisang, singkong, dan kelapa. Dalam bidang peternakan, sapi dan kambing menjadi hewan ternak yang paling banyak dipelihara oleh warga. Selain kegiatan pertanian dan peternakan, sebagian masyarakat juga menjalankan usaha kecil seperti kerajinan lokal dan perdagangan hasil tani, yang turut berkontribusi dalam meningkatkan taraf ekonomi desa.
+                </Typography>
+
                 </Box>
               </motion.div>
             </Grid>

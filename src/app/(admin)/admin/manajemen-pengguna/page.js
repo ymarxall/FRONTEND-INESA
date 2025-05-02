@@ -3,13 +3,10 @@
 import { useState, useEffect } from 'react'
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
-  Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Box,
-  Typography, Card, CardContent, IconButton, Tooltip, Alert, Fade,
-  CircularProgress, MenuItem
+  Box, Typography, Card, CardContent, IconButton, Tooltip, Alert, Fade,
+  CircularProgress
 } from '@mui/material'
-import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
-import AddIcon from '@mui/icons-material/Add'
 import PeopleIcon from '@mui/icons-material/People'
 import { styled } from '@mui/material/styles'
 
@@ -32,19 +29,6 @@ const HeaderBox = styled(Box)(({ theme }) => ({
   boxShadow: '0 4px 20px 0 rgba(0,0,0,0.1)'
 }))
 
-const AddButton = styled(Button)(({ theme }) => ({
-  backgroundColor: 'white',
-  color: '#1a237e',
-  borderRadius: '12px',
-  textTransform: 'none',
-  fontWeight: 600,
-  padding: '12px 24px',
-  '&:hover': {
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    boxShadow: '0 8px 16px 0 rgba(0,0,0,0.1)'
-  }
-}))
-
 const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
   borderRadius: '16px',
   boxShadow: 'none',
@@ -57,15 +41,6 @@ const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
 
 export default function ManajemenPengguna() {
   const [users, setUsers] = useState([])
-  const [openDialog, setOpenDialog] = useState(false)
-  const [editingId, setEditingId] = useState(null)
-  const [formData, setFormData] = useState({
-    nikadmin: '',
-    email: '',
-    password: '',
-    namalengkap: '',
-    role_id: ''
-  })
   const [loading, setLoading] = useState(false)
   const [showAlert, setShowAlert] = useState(false)
   const [alertMessage, setAlertMessage] = useState('')
@@ -138,142 +113,6 @@ export default function ManajemenPengguna() {
     }
   }
 
-  const handleOpenDialog = () => {
-    setEditingId(null)
-    setFormData({
-      nikadmin: '',
-      email: '',
-      password: '',
-      namalengkap: '',
-      role_id: ''
-    })
-    setOpenDialog(true)
-  }
-
-  const handleCloseDialog = () => {
-    setOpenDialog(false)
-    setFormData({
-      nikadmin: '',
-      email: '',
-      password: '',
-      namalengkap: '',
-      role_id: ''
-    })
-    setEditingId(null)
-  }
-
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    if (name === 'nikadmin' && value && !/^\d*$/.test(value)) return
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
-
-  const handleSubmit = async () => {
-    setLoading(true)
-    setShowAlert(false)
-
-    const { nikadmin, email, password, namalengkap, role_id } = formData
-
-    if (nikadmin.length > 20) {
-      showAlertMessage('NIP maksimal 20 digit', 'error')
-      setLoading(false)
-      return
-    }
-
-    if (!editingId && password.length > 20) {
-      showAlertMessage('Password maksimal 20 karakter', 'error')
-      setLoading(false)
-      return
-    }
-
-    if (!nikadmin || !email || !namalengkap || !role_id || (!editingId && !password)) {
-      showAlertMessage('Semua field harus diisi', 'error')
-      setLoading(false)
-      return
-    }
-
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      showAlertMessage('Email tidak valid', 'error')
-      setLoading(false)
-      return
-    }
-
-    const validRoles = ['ROLE000', 'ROLE001', 'ROLE002']
-    if (!validRoles.includes(role_id)) {
-      showAlertMessage('Peran tidak valid', 'error')
-      setLoading(false)
-      return
-    }
-
-    const signupPayload = { nikadmin, email, namalengkap, role_id }
-    if (password && !editingId) {
-      signupPayload.pass = password
-    }
-
-    try {
-      const token = getCookie('token')
-      if (!token) {
-        showAlertMessage('Token tidak ditemukan, silakan login kembali', 'error')
-        setLoading(false)
-        return
-      }
-
-      const endpoint = editingId
-        ? `http://localhost:8080/api/user/${editingId}`
-        : 'http://localhost:8080/api/user/sign-up'
-      const method = editingId ? 'PUT' : 'POST'
-
-      console.log('[SUBMIT] Mengirim data:', signupPayload, 'ke endpoint:', endpoint)
-      const response = await fetch(endpoint, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(signupPayload),
-      })
-
-      console.log('[SUBMIT] Status:', response.status)
-      const text = await response.text()
-      console.log('[SUBMIT] Respons teks:', text)
-
-      let responseData
-      try {
-        responseData = JSON.parse(text)
-        console.log('[SUBMIT] Respons JSON:', responseData)
-      } catch (jsonError) {
-        console.error('[SUBMIT] Gagal parsing JSON:', jsonError)
-        throw new Error(`Respons bukan JSON: ${text}`)
-      }
-
-      if (!response.ok) {
-        console.error('[SUBMIT] Respons tidak OK:', response.status, responseData)
-        throw new Error(responseData.message || (editingId ? 'Gagal memperbarui pengguna' : 'Registrasi gagal'))
-      }
-
-      showAlertMessage(editingId ? 'Pengguna berhasil diperbarui' : 'Pengguna berhasil ditambahkan', 'success')
-      handleCloseDialog()
-      fetchUsers()
-    } catch (err) {
-      console.error('Submit error:', err)
-      showAlertMessage(err.message || 'Gagal memproses permintaan', 'error')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleEdit = (user) => {
-    setEditingId(user.id)
-    setFormData({
-      nikadmin: user.nikadmin,
-      email: user.email,
-      password: '',
-      namalengkap: user.namalengkap,
-      role_id: user.role_id
-    })
-    setOpenDialog(true)
-  }
-
   const handleDelete = async (id) => {
     if (!window.confirm(`Apakah Anda yakin ingin menghapus pengguna dengan ID ${id}?`)) {
       return
@@ -342,9 +181,6 @@ export default function ManajemenPengguna() {
         <Typography variant="h4" sx={{ fontWeight: 700 }}>
           Manajemen Pengguna
         </Typography>
-        <AddButton variant="contained" startIcon={<AddIcon />} onClick={handleOpenDialog}>
-          Tambah Pengguna
-        </AddButton>
       </HeaderBox>
 
       <StyledCard>
@@ -388,11 +224,6 @@ export default function ManajemenPengguna() {
                          user.role_id === 'ROLE002' ? 'Sekretaris' : user.role_id}
                       </TableCell>
                       <TableCell align="center">
-                        <Tooltip title="Edit">
-                          <IconButton onClick={() => handleEdit(user)}>
-                            <EditIcon />
-                          </IconButton>
-                        </Tooltip>
                         <Tooltip title="Hapus">
                           <IconButton onClick={() => handleDelete(user.id)}>
                             <DeleteIcon />
@@ -407,92 +238,6 @@ export default function ManajemenPengguna() {
           </StyledTableContainer>
         </CardContent>
       </StyledCard>
-
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>{editingId ? 'Edit Pengguna' : 'Tambah Pengguna'}</DialogTitle>
-        <DialogContent>
-          <Box component="form" sx={{ mt: 2 }}>
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="nikadmin"
-              label="NIP Admin"
-              value={formData.nikadmin}
-              onChange={handleChange}
-              inputProps={{ maxLength: 20, pattern: '[0-9]*' }}
-              disabled={loading}
-              error={showAlert && (!formData.nikadmin || formData.nikadmin.length > 20)}
-              helperText={showAlert && (!formData.nikadmin ? 'NIP wajib diisi' : formData.nikadmin.length > 20 ? 'NIP maksimal 20 digit' : '')}
-            />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="namalengkap"
-              label="Nama Lengkap"
-              value={formData.namalengkap}
-              onChange={handleChange}
-              disabled={loading}
-              error={showAlert && !formData.namalengkap}
-              helperText={showAlert && !formData.namalengkap ? 'Nama lengkap wajib diisi' : ''}
-            />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="email"
-              label="Email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              disabled={loading}
-              error={showAlert && (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))}
-              helperText={showAlert && (!formData.email ? 'Email wajib diisi' : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) ? 'Email tidak valid' : '')}
-            />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="role_id"
-              label="Pilih Peran"
-              select
-              value={formData.role_id}
-              onChange={handleChange}
-              disabled={loading}
-              error={showAlert && !formData.role_id}
-              helperText={showAlert && !formData.role_id ? 'Peran wajib dipilih' : ''}
-            >
-              <MenuItem value="">Pilih peran...</MenuItem>
-              <MenuItem value="ROLE000">Admin</MenuItem>
-              <MenuItem value="ROLE001">Bendahara</MenuItem>
-              <MenuItem value="ROLE002">Sekretaris</MenuItem>
-            </TextField>
-            <TextField
-              margin="normal"
-              required={!editingId}
-              fullWidth
-              name="password"
-              label="Password"
-              type="password"
-              value={formData.password}
-              onChange={handleChange}
-              inputProps={{ maxLength: 20 }}
-              disabled={loading}
-              error={showAlert && !editingId && (!formData.password || formData.password.length > 20)}
-              helperText={showAlert && !editingId && (!formData.password ? 'Password wajib diisi' : formData.password.length > 20 ? 'Password maksimal 20 karakter' : '')}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} disabled={loading}>
-            Batal
-          </Button>
-          <Button onClick={handleSubmit} disabled={loading}>
-            {loading ? <CircularProgress size={24} /> : editingId ? 'Simpan' : 'Tambah'}
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   )
 }

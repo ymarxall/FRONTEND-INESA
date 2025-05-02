@@ -11,10 +11,8 @@ import {
   Alert
 } from '@mui/material';
 import axios from 'axios';
-import { useRouter } from 'next/navigation';
 
 const WebsiteContentPage = () => {
-  const router = useRouter();
   const [formData, setFormData] = useState({
     logo: '',
     title: '',
@@ -48,8 +46,7 @@ const WebsiteContentPage = () => {
         const res = await axios.get('http://localhost:8080/api/content', {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'ngrok-skip-browser-warning': 'true'
+            'Content-Type': 'application/json'
           },
           timeout: 10000
         });
@@ -58,9 +55,9 @@ const WebsiteContentPage = () => {
         const result = res.data?.data ?? res.data;
         setFormData({
           logo: result.logo || '',
-          title: result.title || 'Desa Bontomanai',
-          description: result.description || 'Kec. Rumbia, Kab. Jeneponto',
-          address: result.address || 'Desa Bontomanai, Kec. Rumbia, Kab. Jeneponto',
+          title: result.title || '',
+          description: result.description || '',
+          address: result.address || '',
           email: result.email || '',
           phone: result.phone || ''
         });
@@ -69,15 +66,10 @@ const WebsiteContentPage = () => {
         let message = 'Gagal memuat konten';
         if (error.response) {
           message = error.response.data.message || `Error ${error.response.status}`;
-          if (error.response.status === 401) {
-            message = 'Sesi kedaluwarsa, silakan login kembali';
-            router.push('/authentication/sign-in');
-          }
         } else if (error.message.includes('timeout')) {
           message = 'Permintaan timeout, silakan coba lagi';
         } else if (error.message.includes('Token')) {
           message = error.message;
-          router.push('/authentication/sign-in');
         }
         setAlert({ open: true, message, severity: 'error' });
       } finally {
@@ -85,7 +77,7 @@ const WebsiteContentPage = () => {
       }
     };
     fetchData();
-  }, [router]);
+  }, []);
 
   // Handle text input changes
   const handleChange = (e) => {
@@ -151,8 +143,7 @@ const WebsiteContentPage = () => {
       await axios.put('http://localhost:8080/api/content', formToSend, {
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
-          'ngrok-skip-browser-warning': 'true'
+          'Content-Type': 'multipart/form-data'
         },
         timeout: 10000
       });
@@ -164,8 +155,7 @@ const WebsiteContentPage = () => {
       const res = await axios.get('http://localhost:8080/api/content', {
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': 'true'
+          'Content-Type': 'application/json'
         },
         timeout: 10000
       });
@@ -173,9 +163,9 @@ const WebsiteContentPage = () => {
       const result = res.data?.data ?? res.data;
       setFormData({
         logo: result.logo || '',
-        title: result.title || 'Desa Bontomanai',
-        description: result.description || 'Kec. Rumbia, Kab. Jeneponto',
-        address: result.address || 'Desa Bontomanai, Kec. Rumbia, Kab. Jeneponto',
+        title: result.title || '',
+        description: result.description || '',
+        address: result.address || '',
         email: result.email || '',
         phone: result.phone || ''
       });
@@ -184,15 +174,10 @@ const WebsiteContentPage = () => {
       let message = 'Gagal menyimpan konten';
       if (error.response) {
         message = error.response.data.message || `Error ${error.response.status}`;
-        if (error.response.status === 401) {
-          message = 'Sesi kedaluwarsa, silakan login kembali';
-          router.push('/authentication/sign-in');
-        }
       } else if (error.message.includes('timeout')) {
         message = 'Permintaan timeout, silakan coba lagi';
       } else if (error.message.includes('Token')) {
         message = error.message;
-        router.push('/authentication/sign-in');
       }
       setAlert({ open: true, message, severity: 'error' });
     } finally {
@@ -207,7 +192,7 @@ const WebsiteContentPage = () => {
         <Box sx={{ textAlign: 'center', mb: 2 }}>
           {formData.logo && !imgError ? (
             <img
-              src={`http://localhost:8080${formData.logo}`}
+              src={`http://localhost:8080/${formData.logo}`}
               alt="Logo Website"
               style={{ maxHeight: 100, objectFit: 'contain' }}
               onError={() => setImgError(true)}

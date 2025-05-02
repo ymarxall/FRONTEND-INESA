@@ -46,7 +46,6 @@ const SubmitButton = styled(Button)(({ theme }) => ({
 
 export default function ResetPassword() {
   const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
@@ -60,53 +59,38 @@ export default function ResetPassword() {
     setSuccess('')
 
     // Validasi input
-    if (!password || !confirmPassword) {
-      setError('Semua field wajib diisi')
+    if (!password) {
+      setError('Password wajib diisi')
       return
     }
-    if (password !== confirmPassword) {
-      setError('Password dan konfirmasi password tidak cocok')
+    if (!token) {
+      setError('Token reset password tidak ditemukan.')
       return
     }
-    // Tidak ada batasan panjang password (sesuai memori 13 April 2025)
 
     try {
       setLoading(true)
-      const res = await fetch("http://localhost:8080/api/user/reset-password", {
+      const response = await fetch(`http://localhost:8080/api/user/reset-password?token=${token}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'ngrok-skip-browser-warning': 'true',
         },
-        body: JSON.stringify({ token, newPassword: password }),
+        body: JSON.stringify({ password })
       })
 
-      const text = await res.text()
-      let data
-      try {
-        data = text ? JSON.parse(text) : {}
-      } catch {
-        throw new Error(`Respons bukan JSON: ${text}`)
-      }
+      const data = await response.json()
 
-      if (!res.ok) {
-        throw new Error(data.message || 'Gagal mengganti password')
+      if (response.ok) {
+        setSuccess('Password berhasil direset! Silahkan Login Kembali')
+        setTimeout(() => {
+          router.push('/')
+        }, 2000)
+      } else {
+        setError(data.message || 'Gagal mereset password')
       }
-
-      setSuccess(data.message || 'Password berhasil diganti')
-      setTimeout(() => {
-        router.push('/authentication/sign-in')
-      }, 2000)
     } catch (err) {
-      let errorMessage = err.message
-      if (err.name === 'AbortError') {
-        errorMessage = 'Permintaan timeout, silakan coba lagi'
-      } else if (err.message.includes('Failed to fetch')) {
-        errorMessage = 'Gagal terhubung ke server, periksa backend atau koneksi'
-      } else if (err.message.includes('401')) {
-        errorMessage = 'Token tidak valid atau kadaluarsa'
-      }
-      setError(errorMessage)
+      setError('Terjadi kesalahan pada server')
     } finally {
       setLoading(false)
     }
@@ -134,16 +118,6 @@ export default function ResetPassword() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            fullWidth
-            required
-            margin="normal"
-            disabled={loading}
-          />
-          <TextField
-            label="Konfirmasi Password"
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
             fullWidth
             required
             margin="normal"

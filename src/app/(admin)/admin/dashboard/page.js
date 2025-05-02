@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import {
-  Box, Typography, Grid, Card, CardContent, CircularProgress, Fade, Chip, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Stack, Alert, TextField, TablePagination, Dialog, DialogTitle, DialogContent, DialogActions
+  Box, Typography, Grid, Card, CardContent, CircularProgress, Fade, Chip, Button, Stack, Alert, Dialog, DialogTitle, DialogContent, DialogActions
 } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import { useRouter } from 'next/navigation'
@@ -15,83 +15,56 @@ import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet'
 import PaymentsIcon from '@mui/icons-material/Payments'
 import MailIcon from '@mui/icons-material/Mail'
 import SendIcon from '@mui/icons-material/Send'
+import AssignmentIcon from '@mui/icons-material/Assignment'
+import Breadcrumbs from '@mui/material/Breadcrumbs'
+import Link from '@mui/material/Link'
 
 // Styled Components
 const DashboardCard = styled(Card)(({ theme }) => ({
-  background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-  borderRadius: '20px',
-  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+  background: 'white',
+  borderRadius: '12px',
+  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.05)',
   transition: 'transform 0.3s ease, box-shadow 0.3s ease',
   '&:hover': {
-    transform: 'translateY(-5px)',
-    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.15)',
+    transform: 'translateY(-3px)',
+    boxShadow: '0 6px 20px rgba(0, 0, 0, 0.1)',
   },
 }))
 
-const TotalPendudukCard = styled(DashboardCard)({
-  height: '240px',
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'center',
-})
-
-const FinancialCard = styled(DashboardCard)({
-  height: '180px',
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'center',
+const StatCard = styled(DashboardCard)({
+  padding: '16px',
 })
 
 const HeaderBox = styled(Box)(({ theme }) => ({
-  background: 'linear-gradient(135deg, #1a237e 0%, #0d47a1 100%)',
-  padding: '20px',
+  backgroundColor: '#1a237e',
+  padding: '16px',
   color: 'white',
-  borderRadius: '20px',
-  marginBottom: '20px',
-  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)',
-  position: 'relative',
-  overflow: 'hidden',
-  '&:before': {
-    content: '""',
-    position: 'absolute',
-    top: '-50%',
-    left: '-50%',
-    width: '200%',
-    height: '200%',
-    background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%)',
-    transform: 'rotate(30deg)',
-  },
+  borderRadius: '12px',
+  marginBottom: '24px',
 }))
 
 const StatIcon = styled(Box)(({ theme }) => ({
-  width: 60,
-  height: 60,
+  width: 40,
+  height: 40,
   borderRadius: '50%',
   backgroundColor: 'rgba(255, 255, 255, 0.2)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  marginBottom: '16px',
+  marginBottom: '8px',
 }))
 
 const ActionButton = styled(Button)(({ theme }) => ({
   backgroundColor: '#1a237e',
   color: 'white',
-  borderRadius: '12px',
-  padding: '10px 20px',
+  borderRadius: '8px',
+  padding: '6px 12px',
   textTransform: 'none',
   fontWeight: 600,
   '&:hover': {
     backgroundColor: '#0d47a1',
-    boxShadow: '0 8px 16px rgba(0, 0, 0, 0.2)',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
   },
-}))
-
-const TableCard = styled(Paper)(({ theme }) => ({
-  background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-  borderRadius: '20px',
-  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-  overflow: 'hidden',
 }))
 
 const TextNoCursor = styled(Typography)({
@@ -124,12 +97,10 @@ export default function Dashboard() {
     totalPengeluaran: 0,
     suratMasuk: 0,
     suratKeluar: 0,
+    permohonanSurat: 0,
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [search, setSearch] = useState('')
-  const [page, setPage] = useState(0)
-  const [rowsPerPage, setRowsPerPage] = useState(5)
   const [openDialog, setOpenDialog] = useState(false)
   const [dialogContent, setDialogContent] = useState(null)
   const router = useRouter()
@@ -156,7 +127,7 @@ export default function Dashboard() {
       }
 
       // Fetch data penduduk
-      const pendudukResponse = await fetchWithTimeout('http://localhost:8080/api/dashboard/stats', {
+      const pendudukResponse = await fetchWithTimeout('http://192.168.1.85:8080/api/dashboard/stats', {
         headers,
         credentials: 'include',
       })
@@ -166,33 +137,95 @@ export default function Dashboard() {
       }
       const pendudukData = await pendudukResponse.json()
 
-      // Fetch data pemasukan
-      const pemasukanResponse = await fetchWithTimeout('http://localhost:8080/api/pemasukan/total', {
-        headers,
-        credentials: 'include',
-      })
-      const pemasukanData = pemasukanResponse.ok ? await pemasukanResponse.json() : { total: 0 }
+      // Fetch data pemasukan dengan penanganan error
+      let pemasukanData = { total: 0 }
+      try {
+        const pemasukanResponse = await fetchWithTimeout('https://joyful-analysis-production.up.railway.app/api/laporan/pemasukan', {
+          headers,
+          credentials: 'include',
+        })
+        if (!pemasukanResponse.ok) {
+          const text = await pemasukanResponse.text()
+          console.error(`Gagal mengambil data pemasukan: ${pemasukanResponse.status} ${text}`)
+        } else {
+          pemasukanData = await pemasukanResponse.json()
+        }
+      } catch (error) {
+        console.error('Error fetching pemasukan:', error)
+      }
 
-      // Fetch data pengeluaran
-      const pengeluaranResponse = await fetchWithTimeout('http://localhost:8080/api/pengeluaran/total', {
-        headers,
-        credentials: 'include',
-      })
-      const pengeluaranData = pengeluaranResponse.ok ? await pengeluaranResponse.json() : { total: 0 }
+      // Fetch data pengeluaran dengan penanganan error
+      let pengeluaranData = { total: 0 }
+      try {
+        const pengeluaranResponse = await fetchWithTimeout('https://joyful-analysis-production.up.railway.app/api/laporan/pengeluaran', {
+          mode: "cors",
+          headers: {
+            "token": eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IjczMDYxNzEzMTEwMzAwMDIiLCJleHAiOjE3NDEyNDkyODl9.lOGDIUZToPIqq_two0QAqUx-uz9hNM1ZcTjitY0cMnA,
+            "Content-Type": "application/json"
+          },
+          credentials: 'include',
+        })
+        if (!pengeluaranResponse.ok) {
+          const text = await pengeluaranResponse.text()
+          console.log(text)
+          console.error(`Gagal mengambil data pengeluaran: ${pengeluaranResponse.status} ${text}`)
+        } else {
+          pengeluaranData = await pengeluaranResponse.json()
+        }
+      } catch (error) {
+        console.error('Error fetching pengeluaran:', error)
+      }
 
       // Fetch data surat masuk
-      const suratMasukResponse = await fetchWithTimeout('http://localhost:8080/api/surat/masuk/total', {
-        headers,
-        credentials: 'include',
-      })
-      const suratMasukData = suratMasukResponse.ok ? await suratMasukResponse.json() : { total: 0 }
+      let suratMasukData = { total: 0 }
+      try {
+        const suratMasukResponse = await fetchWithTimeout('http://192.168.1.85:8088/api/suratmasuk', {
+          headers,
+          credentials: 'include',
+        })
+        if (!suratMasukResponse.ok) {
+          const text = await suratMasukResponse.text()
+          console.error(`Gagal mengambil data surat masuk: ${suratMasukResponse.status} ${text}`)
+        } else {
+          suratMasukData = await suratMasukResponse.json()
+        }
+      } catch (error) {
+        console.error('Error fetching surat masuk:', error)
+      }
 
       // Fetch data surat keluar
-      const suratKeluarResponse = await fetchWithTimeout('http://localhost:8080/api/surat/keluar/total', {
-        headers,
-        credentials: 'include',
-      })
-      const suratKeluarData = suratKeluarResponse.ok ? await suratKeluarResponse.json() : { total: 0 }
+      let suratKeluarData = { total: 0 }
+      try {
+        const suratKeluarResponse = await fetchWithTimeout('http://192.168.1.85:8088/api/suratkeluar', {
+          headers,
+          credentials: 'include',
+        })
+        if (!suratKeluarResponse.ok) {
+          const text = await suratKeluarResponse.text()
+          console.error(`Gagal mengambil data surat keluar: ${suratKeluarResponse.status} ${text}`)
+        } else {
+          suratKeluarData = await suratKeluarResponse.json()
+        }
+      } catch (error) {
+        console.error('Error fetching surat keluar:', error)
+      }
+
+      // Fetch data permohonan surat
+      let permohonanSuratData = { total: 0 }
+      try {
+        const permohonanSuratResponse = await fetchWithTimeout('http://192.168.1.85:8088/api/permohonansurat', {
+          headers,
+          credentials: 'include',
+        })
+        if (!permohonanSuratResponse.ok) {
+          const text = await permohonanSuratResponse.text()
+          console.error(`Gagal mengambil data permohonan surat: ${permohonanSuratResponse.status} ${text}`)
+        } else {
+          permohonanSuratData = await permohonanSuratResponse.json()
+        }
+      } catch (error) {
+        console.error('Error fetching permohonan surat:', error)
+      }
 
       setStats({
         totalPenduduk: pendudukData.total || 0,
@@ -202,6 +235,7 @@ export default function Dashboard() {
         totalPengeluaran: pengeluaranData.total || 0,
         suratMasuk: suratMasukData.total || 0,
         suratKeluar: suratKeluarData.total || 0,
+        permohonanSurat: permohonanSuratData.total || 0,
       })
     } catch (error) {
       console.error('[FETCH] Gagal mengambil data statistik:', error)
@@ -224,7 +258,6 @@ export default function Dashboard() {
     }
   }
 
-  // Format angka ke format rupiah
   const formatRupiah = (value) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
@@ -233,36 +266,16 @@ export default function Dashboard() {
     }).format(value)
   }
 
-  // Data surat untuk tabel
   const suratData = [
     { jenis: 'Surat Masuk', jumlah: stats.suratMasuk, path: '/surat/masuk' },
     { jenis: 'Surat Keluar', jumlah: stats.suratKeluar, path: '/surat/keluar' },
+    { jenis: 'Permohonan Surat', jumlah: stats.permohonanSurat, path: '/surat/permohonan' },
   ]
-
-  // Filter dan paginasi
-  const filteredSurat = useMemo(() => {
-    return suratData.filter(item => item.jenis.toLowerCase().includes(search.toLowerCase()))
-  }, [search])
-
-  const paginatedSurat = useMemo(() => {
-    const start = page * rowsPerPage
-    return filteredSurat.slice(start, start + rowsPerPage)
-  }, [filteredSurat, page, rowsPerPage])
-
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage)
-  }
-
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10))
-    setPage(0)
-  }
 
   const handleViewDetails = (item) => {
     setDialogContent({
       jenis: item.jenis,
       jumlah: item.jumlah,
-      path: item.path,
     })
     setOpenDialog(true)
   }
@@ -273,7 +286,7 @@ export default function Dashboard() {
   }
 
   return (
-    <Box sx={{ padding: '20px', mt: '-15px', bgcolor: '#f4f6f8', minHeight: 'calc(100vh - 30px)' }}>
+    <Box sx={{ padding: '24px', bgcolor: '#f5f5f5', minHeight: 'calc(100vh - 48px)' }}>
       <Fade in={error !== null}>
         <Alert severity="error" sx={{ mb: 3, display: error ? 'flex' : 'none' }}>
           {error}
@@ -284,18 +297,32 @@ export default function Dashboard() {
         <Box>
           {/* Header */}
           <HeaderBox>
-            <TextNoCursor variant="h3" sx={{ fontWeight: 700, mb: 1, zIndex: 1 }}>
+            <Breadcrumbs sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 1 }}>
+              <Link underline="hover" color="inherit" href="/">
+                Home
+              </Link>
+              <TextNoCursor color="inherit">Dashboard</TextNoCursor>
+            </Breadcrumbs>
+            <TextNoCursor variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
               Dashboard Admin
             </TextNoCursor>
-            <TextNoCursor variant="subtitle1" sx={{ opacity: 0.8, mb: 2, zIndex: 1 }}>
+            <TextNoCursor variant="subtitle2" sx={{ opacity: 0.8, mb: 2 }}>
               Sistem Informasi Desa Bontomanai Kec. Rumbia, Kab. Jeneponto
             </TextNoCursor>
-            <ActionButton
-              startIcon={<AdminPanelSettingsIcon />}
-              onClick={() => router.push('/data-penduduk')}
-            >
-              Kelola Data Penduduk
-            </ActionButton>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <ActionButton
+                startIcon={<AccountBalanceWalletIcon />}
+                onClick={() => router.push('/bendahara/dashboard')}
+              >
+                Dashboard Bendahara
+              </ActionButton>
+              <ActionButton
+                startIcon={<AdminPanelSettingsIcon />}
+                onClick={() => router.push('/sekretaris/dashboard')}
+              >
+                Dashboard Sekretaris
+              </ActionButton>
+            </Box>
           </HeaderBox>
 
           {loading ? (
@@ -304,193 +331,151 @@ export default function Dashboard() {
             </Box>
           ) : (
             <>
-              {/* Baris Atas: Total Penduduk, Laki-laki, Perempuan */}
-              <Grid container spacing={3}>
-                <Grid item xs={12} sm={4}>
-                  <TotalPendudukCard>
-                    <CardContent sx={{ textAlign: 'center' }}>
-                      <StatIcon>
-                        <PeopleIcon sx={{ fontSize: 36, color: '#1a237e' }} />
-                      </StatIcon>
-                      <TextNoCursor variant="h6" color="textSecondary">
-                        Total Penduduk
-                      </TextNoCursor>
-                      <TextNoCursor variant="h4" sx={{ fontWeight: 700, color: '#1a237e' }}>
-                        {stats.totalPenduduk}
-                      </TextNoCursor>
-                    </CardContent>
-                  </TotalPendudukCard>
+              {/* Bagian Statistik Penduduk dan Keuangan */}
+              <Box sx={{ bgcolor: 'white', borderRadius: '12px', p: 3, mb: 4, boxShadow: '0 4px 16px rgba(0, 0, 0, 0.05)' }}>
+                <TextNoCursor variant="h5" sx={{ fontWeight: 600, color: '#1a237e', mb: 3 }}>
+                  Statistik Desa
+                </TextNoCursor>
+                <Grid container spacing={2}>
+                  {/* Total Penduduk */}
+                  <Grid item xs={12} sm={6} md={4}>
+                    <StatCard>
+                      <CardContent sx={{ textAlign: 'center', p: 0 }}>
+                        <StatIcon>
+                          <PeopleIcon sx={{ fontSize: 24, color: '#1a237e' }} />
+                        </StatIcon>
+                        <TextNoCursor variant="body2" color="textSecondary">
+                          Total Penduduk
+                        </TextNoCursor>
+                        <TextNoCursor variant="h5" sx={{ fontWeight: 700, color: '#1a237e' }}>
+                          {stats.totalPenduduk}
+                        </TextNoCursor>
+                      </CardContent>
+                    </StatCard>
+                  </Grid>
+
+                  {/* Laki-laki */}
+                  <Grid item xs={12} sm={6} md={4}>
+                    <StatCard>
+                      <CardContent sx={{ textAlign: 'center', p: 0 }}>
+                        <StatIcon>
+                          <MaleIcon sx={{ fontSize: 24, color: '#1976d2' }} />
+                        </StatIcon>
+                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
+                          <TextNoCursor variant="body2" color="textSecondary">
+                            Laki-laki
+                          </TextNoCursor>
+                          <Chip
+                            label={`${((stats.lakiLaki / stats.totalPenduduk) * 100 || 0).toFixed(1)}%`}
+                            color="primary"
+                            size="small"
+                          />
+                        </Box>
+                        <TextNoCursor variant="h5" sx={{ fontWeight: 700, color: '#1976d2', mt: 1 }}>
+                          {stats.lakiLaki}
+                        </TextNoCursor>
+                      </CardContent>
+                    </StatCard>
+                  </Grid>
+
+                  {/* Perempuan */}
+                  <Grid item xs={12} sm={6} md={4}>
+                    <StatCard>
+                      <CardContent sx={{ textAlign: 'center', p: 0 }}>
+                        <StatIcon>
+                          <FemaleIcon sx={{ fontSize: 24, color: '#f06292' }} />
+                        </StatIcon>
+                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
+                          <TextNoCursor variant="body2" color="textSecondary">
+                            Perempuan
+                          </TextNoCursor>
+                          <Chip
+                            label={`${((stats.perempuan / stats.totalPenduduk) * 100 || 0).toFixed(1)}%`}
+                            size="small"
+                            sx={{ bgcolor: '#f06292', color: 'white' }}
+                          />
+                        </Box>
+                        <TextNoCursor variant="h5" sx={{ fontWeight: 700, color: '#f06292', mt: 1 }}>
+                          {stats.perempuan}
+                        </TextNoCursor>
+                      </CardContent>
+                    </StatCard>
+                  </Grid>
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
-                  <DashboardCard>
-                    <CardContent sx={{ textAlign: 'center' }}>
-                      <StatIcon>
-                        <MaleIcon sx={{ fontSize: 36, color: '#1976d2' }} />
-                      </StatIcon>
-                      <TextNoCursor variant="h6" color="textSecondary">
-                        Laki-laki
-                      </TextNoCursor>
-                      <TextNoCursor variant="h4" sx={{ fontWeight: 700, color: '#1976d2' }}>
-                        {stats.lakiLaki}
-                      </TextNoCursor>
-                      <Chip
-                        label={`${((stats.lakiLaki / stats.totalPenduduk) * 100 || 0).toFixed(1)}%`}
-                        color="primary"
-                        sx={{ mt: 2 }}
-                      />
-                    </CardContent>
-                  </DashboardCard>
-                </Grid>
+                <Box sx={{ mt: 3 }}>
+                  <TextNoCursor variant="body1" sx={{ fontWeight: 600, color: '#1a237e', mb: 1 }}>
+                    Detail Keuangan
+                  </TextNoCursor>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
+                      <StatCard>
+                        <CardContent sx={{ textAlign: 'center', p: 0 }}>
+                          <TextNoCursor variant="body2" color="textSecondary">
+                            Total Pemasukan
+                          </TextNoCursor>
+                          <TextNoCursor variant="h5" sx={{ fontWeight: 700, color: '#22c55e' }}>
+                            {formatRupiah(stats.totalPemasukan)}
+                          </TextNoCursor>
+                        </CardContent>
+                      </StatCard>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <StatCard>
+                        <CardContent sx={{ textAlign: 'center', p: 0 }}>
+                          <TextNoCursor variant="body2" color="textSecondary">
+                            Total Pengeluaran
+                          </TextNoCursor>
+                          <TextNoCursor variant="h5" sx={{ fontWeight: 700, color: '#ef4444' }}>
+                            {formatRupiah(stats.totalPengeluaran)}
+                          </TextNoCursor>
+                        </CardContent>
+                      </StatCard>
+                    </Grid>
+                  </Grid>
+                </Box>
+              </Box>
 
-                <Grid item xs={12} sm={4}>
-                  <DashboardCard>
-                    <CardContent sx={{ textAlign: 'center' }}>
-                      <StatIcon>
-                        <FemaleIcon sx={{ fontSize: 36, color: '#f06292' }} />
-                      </StatIcon>
-                      <TextNoCursor variant="h6" color="textSecondary">
-                        Perempuan
-                      </TextNoCursor>
-                      <TextNoCursor variant="h4" sx={{ fontWeight: 700, color: '#f06292' }}>
-                        {stats.perempuan}
-                      </TextNoCursor>
-                      <Chip
-                        label={`${((stats.perempuan / stats.totalPenduduk) * 100 || 0).toFixed(1)}%`}
-                        sx={{ mt: 2, bgcolor: '#f06292', color: 'white' }}
-                      />
-                    </CardContent>
-                  </DashboardCard>
-                </Grid>
-              </Grid>
-
-              {/* Baris Tengah: Pemasukan dan Pengeluaran */}
-              <Grid container spacing={3} sx={{ mt: 2 }}>
-                <Grid item xs={12} sm={6}>
-                  <FinancialCard>
-                    <CardContent sx={{ textAlign: 'center' }}>
-                      <StatIcon>
-                        <AccountBalanceWalletIcon sx={{ fontSize: 36, color: '#22c55e' }} />
-                      </StatIcon>
-                      <TextNoCursor variant="h6" color="textSecondary">
-                        Total Pemasukan
-                      </TextNoCursor>
-                      <TextNoCursor variant="h4" sx={{ fontWeight: 700, color: '#22c55e' }}>
-                        {formatRupiah(stats.totalPemasukan)}
-                      </TextNoCursor>
-                    </CardContent>
-                  </FinancialCard>
-                </Grid>
-
-                <Grid item xs={12} sm={6}>
-                  <FinancialCard>
-                    <CardContent sx={{ textAlign: 'center' }}>
-                      <StatIcon>
-                        <PaymentsIcon sx={{ fontSize: 36, color: '#ef4444' }} />
-                      </StatIcon>
-                      <TextNoCursor variant="h6" color="textSecondary">
-                        Total Pengeluaran
-                      </TextNoCursor>
-                      <TextNoCursor variant="h4" sx={{ fontWeight: 700, color: '#ef4444' }}>
-                        {formatRupiah(stats.totalPengeluaran)}
-                      </TextNoCursor>
-                    </CardContent>
-                  </FinancialCard>
-                </Grid>
-              </Grid>
-
-              {/* Baris Bawah: Tabel Surat Masuk dan Keluar */}
-              <Box sx={{ mt: 4 }}>
-                <TextNoCursor variant="h6" sx={{ fontWeight: 600, color: '#1a237e', mb: 2 }}>
+              {/* Bagian Statistik Surat */}
+              <Box sx={{ bgcolor: 'white', borderRadius: '12px', p: 3, boxShadow: '0 4px 16px rgba(0, 0, 0, 0.05)' }}>
+                <TextNoCursor variant="h5" sx={{ fontWeight: 600, color: '#1a237e', mb: 3 }}>
                   Statistik Surat
                 </TextNoCursor>
-                <TableCard sx={{ display: { xs: 'none', sm: 'block' } }}>
-                  <TableContainer>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: 600, color: '#1a237e' }}>Jenis Surat</TableCell>
-                          <TableCell sx={{ fontWeight: 600, color: '#1a237e' }} align="center">Jumlah</TableCell>
-                          <TableCell sx={{ fontWeight: 600, color: '#1a237e' }} align="center">Aksi</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {paginatedSurat.map((item) => (
-                          <TableRow key={item.jenis}>
-                            <TableCell sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Grid container spacing={2}>
+                  {suratData.map((item) => (
+                    <Grid item xs={12} sm={6} md={4} key={item.jenis}>
+                      <StatCard>
+                        <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <StatIcon>
                               {item.jenis === 'Surat Masuk' ? (
-                                <MailIcon sx={{ color: '#3b82f6' }} />
+                                <MailIcon sx={{ fontSize: 24, color: '#3b82f6' }} />
+                              ) : item.jenis === 'Surat Keluar' ? (
+                                <SendIcon sx={{ fontSize: 24, color: '#f59e0b' }} />
                               ) : (
-                                <SendIcon sx={{ color: '#f59e0b' }} />
+                                <AssignmentIcon sx={{ fontSize: 24, color: '#10b981' }} />
                               )}
-                              {item.jenis}
-                            </TableCell>
-                            <TableCell align="center">{item.jumlah}</TableCell>
-                            <TableCell align="center">
-                              <ActionButton
-                                size="small"
-                                onClick={() => handleViewDetails(item)}
-                              >
-                                Lihat Detail
-                              </ActionButton>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                  <TablePagination
-                    rowsPerPageOptions={[5, 10, 25]}
-                    component="div"
-                    count={filteredSurat.length}
-                    rowsPerPage={rowsPerPage}
-                    page={page}
-                    onPageChange={handleChangePage}
-                    onRowsPerPageChange={handleChangeRowsPerPage}
-                  />
-                </TableCard>
-
-                {/* Kartu untuk Mobile */}
-                <Stack spacing={2} sx={{ display: { xs: 'block', sm: 'none' } }}>
-                  {paginatedSurat.map((item) => (
-                    <DashboardCard key={item.jenis}>
-                      <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                          <StatIcon>
-                            {item.jenis === 'Surat Masuk' ? (
-                              <MailIcon sx={{ fontSize: 36, color: '#3b82f6' }} />
-                            ) : (
-                              <SendIcon sx={{ fontSize: 36, color: '#f59e0b' }} />
-                            )}
-                          </StatIcon>
-                          <Box>
-                            <TextNoCursor variant="h6" color="textSecondary">
-                              {item.jenis}
-                            </TextNoCursor>
-                            <TextNoCursor variant="h4" sx={{ fontWeight: 700, color: item.jenis === 'Surat Masuk' ? '#3b82f6' : '#f59e0b' }}>
-                              {item.jumlah}
-                            </TextNoCursor>
+                            </StatIcon>
+                            <Box>
+                              <TextNoCursor variant="body1" color="textSecondary">
+                                {item.jenis}
+                              </TextNoCursor>
+                              <TextNoCursor variant="h5" sx={{ fontWeight: 700, color: item.jenis === 'Surat Masuk' ? '#3b82f6' : item.jenis === 'Surat Keluar' ? '#f59e0b' : '#10b981' }}>
+                                {item.jumlah}
+                              </TextNoCursor>
+                            </Box>
                           </Box>
-                        </Box>
-                        <ActionButton
-                          size="small"
-                          onClick={() => handleViewDetails(item)}
-                        >
-                          Lihat Detail
-                        </ActionButton>
-                      </CardContent>
-                    </DashboardCard>
+                          <ActionButton
+                            size="small"
+                            onClick={() => handleViewDetails(item)}
+                          >
+                            Lihat Detail
+                          </ActionButton>
+                        </CardContent>
+                      </StatCard>
+                    </Grid>
                   ))}
-                  <TablePagination
-                    rowsPerPageOptions={[5, 10, 25]}
-                    component="div"
-                    count={filteredSurat.length}
-                    rowsPerPage={rowsPerPage}
-                    page={page}
-                    onPageChange={handleChangePage}
-                    onRowsPerPageChange={handleChangeRowsPerPage}
-                  />
-                </Stack>
+                </Grid>
               </Box>
             </>
           )}
@@ -510,16 +495,6 @@ export default function Dashboard() {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Tutup</Button>
-          <Button
-            onClick={() => {
-              router.push(dialogContent?.path)
-              handleCloseDialog()
-            }}
-            variant="contained"
-            sx={{ backgroundColor: '#1a237e', '&:hover': { backgroundColor: '#0d47a1' } }}
-          >
-            Buka Halaman
-          </Button>
         </DialogActions>
       </Dialog>
     </Box>

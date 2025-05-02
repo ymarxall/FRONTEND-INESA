@@ -10,14 +10,9 @@ import {
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
 import AddIcon from '@mui/icons-material/Add'
-import RefreshIcon from '@mui/icons-material/Refresh'
 import PeopleIcon from '@mui/icons-material/People'
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'
-import WarningIcon from '@mui/icons-material/Warning'
-import ReplayIcon from '@mui/icons-material/Replay'
 import { styled } from '@mui/material/styles'
-import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 
 const StyledCard = styled(Card)(({ theme }) => ({
   backgroundColor: '#ffffff',
@@ -51,34 +46,6 @@ const AddButton = styled(Button)(({ theme }) => ({
   }
 }))
 
-const RefreshButton = styled(Button)(({ theme }) => ({
-  backgroundColor: 'white',
-  color: '#1a237e',
-  borderRadius: '12px',
-  textTransform: 'none',
-  fontWeight: 600,
-  padding: '12px 24px',
-  marginLeft: '16px',
-  '&:hover': {
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    boxShadow: '0 8px 16px 0 rgba(0,0,0,0.1)'
-  }
-}))
-
-const RetryButton = styled(Button)(({ theme }) => ({
-  backgroundColor: '#f44336',
-  color: 'white',
-  borderRadius: '12px',
-  textTransform: 'none',
-  fontWeight: 600,
-  padding: '8px 16px',
-  marginTop: '16px',
-  '&:hover': {
-    backgroundColor: '#d32f2f',
-    boxShadow: '0 8px 16px 0 rgba(0,0,0,0.1)'
-  }
-}))
-
 const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
   borderRadius: '16px',
   boxShadow: 'none',
@@ -89,21 +56,7 @@ const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
   }
 }))
 
-const AvatarPlaceholder = styled(Box)(({ theme }) => ({
-  width: '50px',
-  height: '50px',
-  backgroundColor: '#1a237e',
-  color: 'white',
-  borderRadius: '4px',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  fontWeight: 'bold',
-  fontSize: '1.2rem'
-}))
-
 export default function DataPegawai() {
-  const router = useRouter()
   const [rows, setRows] = useState([])
   const [showModal, setShowModal] = useState(false)
   const [showAdminModal, setShowAdminModal] = useState(false)
@@ -122,27 +75,24 @@ export default function DataPegawai() {
   const [alertMessage, setAlertMessage] = useState('')
   const [alertType, setAlertType] = useState('success')
   const [loading, setLoading] = useState(false)
-  const [fetchError, setFetchError] = useState(null)
-  const [errorDetails, setErrorDetails] = useState('')
-  const [failedImages, setFailedImages] = useState(new Set())
 
   useEffect(() => {
-    const token = getCookie('token')
-    if (!token) {
-      showAlertMessage('Token tidak ditemukan, silakan login kembali', 'error')
-      router.push('/authentication/sign-in')
-    } else {
-      fetchPegawaiData()
-    }
-  }, [router])
+    fetchPegawaiData()
+  }, [])
+
+  const getCookie = (name) => {
+    const value = `; ${document.cookie}`
+    const parts = value.split(`; ${name}=`)
+    if (parts.length === 2) return parts.pop().split(';').shift()
+  }
 
   const fetchWithTimeout = async (url, options, timeout = 10000) => {
     const controller = new AbortController()
     const id = setTimeout(() => controller.abort(), timeout)
     try {
-      console.log(`[FETCH] Mengirim permintaan ke: ${url}`)
+      console.log(`[FETCH] Mengirim permintaan ke: ${url}`, options)
       const response = await fetch(url, { ...options, signal: controller.signal })
-      console.log(`[FETCH] Status: ${response.status}, Content-Type: ${response.headers.get('Content-Type')}`)
+      console.log(`[FETCH] Status: ${response.status}, Headers:`, Object.fromEntries(response.headers))
       clearTimeout(id)
       return response
     } catch (error) {
@@ -152,65 +102,43 @@ export default function DataPegawai() {
     }
   }
 
-  const getCookie = (name) => {
-    const value = `; ${document.cookie}`
-    const parts = value.split(`; ${name}=`)
-    if (parts.length === 2) return parts.pop().split(';').shift()
-  }
-
-  const fetchPegawaiData = async (retryCount = 0, maxRetries = 3) => {
+  const fetchPegawaiData = async (retryCount = 3) => {
     try {
       setLoading(true)
-      setFetchError(null)
-      setErrorDetails('')
       const token = getCookie('token')
-      if (!token) {
-        showAlertMessage('Token tidak ditemukan, silakan login kembali', 'error')
-        setFetchError('Token tidak ditemukan')
-        setErrorDetails('Tidak ada token di cookie')
-        router.push('/authentication/sign-in')
-        return
-      }
-      console.log('[FETCH] Mengambil data pegawai dengan token:', token)
+      console.log('[FETCH] Token:', token || 'Tidak ada token ditemukan')
+
+      const headers = token
+        ? {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        : {
+            'Content-Type': 'application/json'
+          }
+
       const res = await fetchWithTimeout('http://localhost:8080/api/pegawai/getall', {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': 'true'
-        },
+        headers,
         credentials: 'include'
       }, 10000)
 
       console.log('[FETCH] Status:', res.status)
-      const contentType = res.headers.get('Content-Type')
       const text = await res.text()
       console.log('[FETCH] Respons teks:', text)
-      console.log('[FETCH] Content-Type:', contentType)
-      console.log('[FETCH] Headers:', [...res.headers.entries()])
 
       let data
-      if (contentType && contentType.includes('application/json')) {
-        try {
-          data = JSON.parse(text)
-          console.log('[FETCH] Respons JSON:', data)
-        } catch (jsonError) {
-          console.error('[FETCH] Gagal parsing JSON:', jsonError)
-          throw new Error(`Respons bukan JSON valid: ${text}`)
-        }
-      } else {
-        console.warn('[FETCH] Respons bukan JSON, Content-Type:', contentType)
-        throw new Error(text || 'Server mengembalikan respons tidak valid')
+      try {
+        data = JSON.parse(text)
+        console.log('[FETCH] Respons JSON:', data)
+      } catch (jsonError) {
+        console.error('[FETCH] Gagal parsing JSON:', jsonError)
+        throw new Error(`Respons bukan JSON: ${text}`)
       }
 
       if (!res.ok) {
         console.error('[FETCH] Respons tidak OK:', res.status, data)
-        if (res.status === 401) {
-          showAlertMessage('Sesi kedaluwarsa, silakan login kembali', 'error')
-          router.push('/authentication/sign-in')
-          return
-        }
-        throw new Error(data.error || data.message || `Gagal mengambil data pegawai: ${res.status}`)
+        throw new Error(data.message || `Gagal mengambil data pegawai: ${res.status}`)
       }
 
       const pegawaiData = Array.isArray(data.data)
@@ -227,42 +155,32 @@ export default function DataPegawai() {
         namalengkap: item.namalengkap || item.nama_lengkap || item.NamaLengkap || '-',
         email: item.email || item.Email || '-',
         jabatan: item.jabatan || item.Jabatan || '-',
-        foto: item.foto && item.foto !== '-' && typeof item.foto === 'string' ? item.foto : null
+        foto: item.foto || item.Foto || '-'
       }))
 
       console.log('[FETCH] Data ternormalisasi:', normalizedData)
       setRows(normalizedData)
-      setFailedImages(new Set()) // Reset failed images on new data fetch
       if (normalizedData.length === 0) {
         showAlertMessage('Tidak ada data pegawai di database', 'info')
       }
     } catch (err) {
       console.error('[FETCH] Error saat fetch data:', err)
+      if (retryCount > 0) {
+        console.log(`[FETCH] Mencoba lagi, sisa percobaan: ${retryCount}`)
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        return fetchPegawaiData(retryCount - 1)
+      }
       let errorMessage = err.message
-      let details = ''
       if (err.name === 'AbortError') {
         errorMessage = 'Permintaan timeout, silakan coba lagi'
-        details = 'Permintaan ke server timeout setelah 10 detik'
-      } else if (err.message.includes('Failed to fetch')) {
+      } else if (err.message.includes('Failed to fetch') || err.message.includes('net::ERR_FAILED')) {
         errorMessage = 'Gagal terhubung ke server, periksa backend atau koneksi'
-        details = 'Tidak dapat menghubungi http://localhost:8080/api/pegawai/getall'
       } else if (err.message.includes('401')) {
-        errorMessage = 'Sesi kedaluwarsa, silakan login kembali'
-        details = 'Status HTTP: 401 Unauthorized'
-        router.push('/authentication/sign-in')
-      } else if (err.message.includes('500')) {
-        errorMessage = 'Kesalahan server, silakan coba lagi nanti'
-        details = 'Status HTTP: 500 Internal Server Error'
+        errorMessage = 'Token tidak valid, silakan login kembali'
+      } else if (err.message.includes('Respons bukan JSON')) {
+        errorMessage = `Server mengembalikan respons tidak valid: ${err.message}`
       }
-
-      setFetchError(errorMessage)
-      setErrorDetails(details)
-      if (retryCount < maxRetries && !err.message.includes('401')) {
-        console.log(`[FETCH] Mencoba ulang (${retryCount + 1}/${maxRetries})...`)
-        setTimeout(() => fetchPegawaiData(retryCount + 1, maxRetries), 2000)
-      } else {
-        showAlertMessage(errorMessage, 'error')
-      }
+      showAlertMessage(errorMessage, 'error')
     } finally {
       setLoading(false)
     }
@@ -273,7 +191,6 @@ export default function DataPegawai() {
     if (name === 'foto') {
       setFormData(prev => ({ ...prev, foto: files[0] || null }))
     } else {
-      if (name === 'nip' && value && !/^\d*$/.test(value)) return
       setFormData(prev => ({ ...prev, [name]: value }))
     }
   }
@@ -294,18 +211,11 @@ export default function DataPegawai() {
     try {
       setLoading(true)
       const token = getCookie('token')
-      if (!token) {
-        showAlertMessage('Token tidak ditemukan, silakan login kembali', 'error')
-        router.push('/authentication/sign-in')
-        return
-      }
-
       const res = await fetchWithTimeout(`http://localhost:8080/api/pegawai/getpegawaibyid/${row.id}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': 'true'
+          'Content-Type': 'application/json'
         },
         credentials: 'include'
       }, 10000)
@@ -321,11 +231,6 @@ export default function DataPegawai() {
       }
 
       if (!res.ok) {
-        if (res.status === 401) {
-          showAlertMessage('Sesi kedaluwarsa, silakan login kembali', 'error')
-          router.push('/authentication/sign-in')
-          return
-        }
         throw new Error(data.message || 'Gagal mengambil data pegawai')
       }
 
@@ -340,7 +245,6 @@ export default function DataPegawai() {
       })
       setShowModal(true)
     } catch (err) {
-      console.error('[EDIT] Error:', err)
       showAlertMessage(err.message, 'error')
     } finally {
       setLoading(false)
@@ -353,8 +257,8 @@ export default function DataPegawai() {
       setLoading(true)
       const token = getCookie('token')
       if (!token) {
+        console.error('[DELETE] Token tidak ditemukan')
         showAlertMessage('Token tidak ditemukan, silakan login kembali', 'error')
-        router.push('/authentication/sign-in')
         return
       }
       console.log('[DELETE] Menghapus data dengan ID:', id)
@@ -362,8 +266,7 @@ export default function DataPegawai() {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': 'true'
+          'Content-Type': 'application/json'
         },
         credentials: 'include'
       }, 10000)
@@ -382,12 +285,7 @@ export default function DataPegawai() {
 
       if (!res.ok) {
         console.error('[DELETE] Respons tidak OK:', res.status, data)
-        if (res.status === 401) {
-          showAlertMessage('Sesi kedaluwarsa, silakan login kembali', 'error')
-          router.push('/authentication/sign-in')
-          return
-        }
-        throw new Error(data.error || data.message || 'Gagal menghapus data')
+        throw new Error(data.message || 'Gagal menghapus data')
       }
       showAlertMessage(data.message || 'Data berhasil dihapus', 'success')
       fetchPegawaiData()
@@ -399,8 +297,7 @@ export default function DataPegawai() {
       } else if (err.message.includes('Failed to fetch')) {
         errorMessage = 'Gagal terhubung ke server, periksa backend atau koneksi'
       } else if (err.message.includes('401')) {
-        errorMessage = 'Sesi kedaluwarsa, silakan login kembali'
-        router.push('/authentication/sign-in')
+        errorMessage = 'Token tidak valid, silakan login kembali'
       }
       showAlertMessage(errorMessage, 'error')
     } finally {
@@ -416,8 +313,9 @@ export default function DataPegawai() {
       return
     }
 
-    if (nip.length > 20) {
-      showAlertMessage('NIP maksimal 20 digit', 'error')
+    // Validasi NIP hanya untuk tambah data baru
+    if (!editingId && !/^\d{8,}$/.test(nip)) {
+      showAlertMessage('NIP harus minimal 8 digit angka', 'error')
       return
     }
 
@@ -430,8 +328,8 @@ export default function DataPegawai() {
       setLoading(true)
       const token = getCookie('token')
       if (!token) {
+        console.error('[SAVE] Token tidak ditemukan')
         showAlertMessage('Token tidak ditemukan, silakan login kembali', 'error')
-        router.push('/authentication/sign-in')
         return
       }
 
@@ -454,8 +352,7 @@ export default function DataPegawai() {
       const res = await fetchWithTimeout(endpoint, {
         method: method,
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'ngrok-skip-browser-warning': 'true'
+          'Authorization': `Bearer ${token}`
         },
         body: formDataToSend,
         credentials: 'include'
@@ -483,12 +380,7 @@ export default function DataPegawai() {
 
       if (!res.ok) {
         console.error('[SAVE] Respons tidak OK:', res.status, data)
-        if (res.status === 401) {
-          showAlertMessage('Sesi kedaluwarsa, silakan login kembali', 'error')
-          router.push('/authentication/sign-in')
-          return
-        }
-        throw new Error(data.error || data.message || `Gagal menyimpan data: ${res.status}`)
+        throw new Error(data.message || `Gagal menyimpan data: ${res.status}`)
       }
 
       showAlertMessage(data.message || (editingId ? 'Data berhasil diperbarui' : 'Data berhasil disimpan'), 'success')
@@ -510,8 +402,7 @@ export default function DataPegawai() {
       } else if (err.message.includes('Failed to fetch')) {
         errorMessage = 'Gagal terhubung ke server, periksa backend atau koneksi'
       } else if (err.message.includes('401')) {
-        errorMessage = 'Sesi kedaluwarsa, silakan login kembali'
-        router.push('/authentication/sign-in')
+        errorMessage = 'Token tidak valid, silakan login kembali'
       }
       showAlertMessage(errorMessage, 'error')
     } finally {
@@ -532,8 +423,8 @@ export default function DataPegawai() {
       return
     }
 
-    if (adminPassword.length > 20) {
-      showAlertMessage('Password maksimal 20 karakter', 'error')
+    if (adminPassword.length < 8) {
+      showAlertMessage('Password harus minimal 8 karakter', 'error')
       return
     }
 
@@ -546,8 +437,8 @@ export default function DataPegawai() {
       setLoading(true)
       const token = getCookie('token')
       if (!token) {
+        console.error('[ADMIN] Token tidak ditemukan')
         showAlertMessage('Token tidak ditemukan, silakan login kembali', 'error')
-        router.push('/authentication/sign-in')
         return
       }
 
@@ -562,8 +453,7 @@ export default function DataPegawai() {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': 'true'
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(payload),
         credentials: 'include'
@@ -591,12 +481,7 @@ export default function DataPegawai() {
 
       if (!res.ok) {
         console.error('[ADMIN] Respons tidak OK:', res.status, data)
-        if (res.status === 401) {
-          showAlertMessage('Sesi kedaluwarsa, silakan login kembali', 'error')
-          router.push('/authentication/sign-in')
-          return
-        }
-        throw new Error(data.error || data.message || `Gagal membuat admin: ${res.status}`)
+        throw new Error(data.message || `Gagal membuat admin: ${res.status}`)
       }
 
       showAlertMessage(data.message || 'Admin berhasil dibuat', 'success')
@@ -613,8 +498,7 @@ export default function DataPegawai() {
       } else if (err.message.includes('Failed to fetch')) {
         errorMessage = 'Gagal terhubung ke server, periksa backend atau koneksi'
       } else if (err.message.includes('401')) {
-        errorMessage = 'Sesi kedaluwarsa, silakan login kembali'
-        router.push('/authentication/sign-in')
+        errorMessage = 'Token tidak valid, silakan login kembali'
       }
       showAlertMessage(errorMessage, 'error')
     } finally {
@@ -622,31 +506,11 @@ export default function DataPegawai() {
     }
   }
 
-  const handleRefresh = () => {
-    console.log('[REFRESH] Memuat ulang data...')
-    fetchPegawaiData()
-  }
-
   const showAlertMessage = (message, type) => {
     setAlertMessage(message)
     setAlertType(type)
     setShowAlert(true)
-    setTimeout(() => setShowAlert(false), 5000)
-  }
-
-  const isValidImageUrl = (url) => {
-    if (!url || typeof url !== 'string') return false
-    try {
-      new URL(url, 'http://localhost:8080')
-      return url.startsWith('/') && url.length > 1
-    } catch {
-      return false
-    }
-  }
-
-  const handleImageError = (url, id) => {
-    console.error(`[IMG] Gagal memuat gambar: ${url}`)
-    setFailedImages(prev => new Set([...prev, `${id}:${url}`]))
+    setTimeout(() => setShowAlert(false), 3000)
   }
 
   return (
@@ -661,14 +525,9 @@ export default function DataPegawai() {
         <Typography variant="h4" sx={{ fontWeight: 700 }}>
           Data Pegawai
         </Typography>
-        <Box sx={{ display: 'flex', gap: '16px' }}>
-          <AddButton variant="contained" startIcon={<AddIcon />} onClick={handleAdd}>
-            Tambah Data Pegawai
-          </AddButton>
-          <RefreshButton variant="contained" startIcon={<RefreshIcon />} onClick={handleRefresh}>
-            Refresh Data
-          </RefreshButton>
-        </Box>
+        <AddButton variant="contained" startIcon={<AddIcon />} onClick={handleAdd}>
+          Tambah Data Pegawai
+        </AddButton>
       </HeaderBox>
 
       <StyledCard>
@@ -690,38 +549,6 @@ export default function DataPegawai() {
                   <TableRow>
                     <TableCell colSpan={6} align="center">
                       <CircularProgress />
-                      <Typography variant="body2" sx={{ mt: 2 }}>
-                        Memuat data...
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                ) : fetchError ? (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center">
-                      <WarningIcon sx={{ fontSize: 48, color: '#f44336', mb: 2 }} />
-                      <Typography variant="body1" color="error">
-                        {fetchError}
-                      </Typography>
-                      {errorDetails && (
-                        <Typography variant="body2" color="error" sx={{ mt: 1 }}>
-                          {errorDetails}
-                        </Typography>
-                      )}
-                      <Typography variant="body2" color="textSecondary">
-                        Coba tekan "Refresh Data" atau periksa koneksi server.
-                      </Typography>
-                      {rows.length > 0 && (
-                        <Typography variant="body2" sx={{ mt: 1 }}>
-                          Menampilkan {rows.length} data dari cache lokal.
-                        </Typography>
-                      )}
-                      <RetryButton
-                        variant="contained"
-                        startIcon={<ReplayIcon />}
-                        onClick={() => fetchPegawaiData()}
-                      >
-                        Coba Lagi
-                      </RetryButton>
                     </TableCell>
                   </TableRow>
                 ) : rows.length === 0 ? (
@@ -734,57 +561,53 @@ export default function DataPegawai() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  rows.map((row) => {
-                    const originalUrl = row.foto && isValidImageUrl(row.foto) ? `http://localhost:8080${row.foto}` : '/default-avatar.png'
-                    const imageKey = `${row.id}:${originalUrl}`
-                    const usePlaceholder = failedImages.has(imageKey) || failedImages.has(`${row.id}:/default-avatar.png`)
-                    console.log(`[IMG] Rendering gambar untuk ${row.namalengkap}: ${usePlaceholder ? 'placeholder' : originalUrl}`)
-                    return (
-                      <TableRow key={row.id || row.nip}>
-                        <TableCell>{row.nip}</TableCell>
-                        <TableCell>{row.namalengkap}</TableCell>
-                        <TableCell>{row.email}</TableCell>
-                        <TableCell>{row.jabatan}</TableCell>
-                        <TableCell>
-                          {usePlaceholder ? (
-                            <AvatarPlaceholder>
-                              {row.namalengkap.charAt(0).toUpperCase()}
-                            </AvatarPlaceholder>
-                          ) : (
-                            <Image
-                              src={originalUrl}
-                              alt={`Foto ${row.namalengkap}`}
-                              width={50}
-                              height={50}
-                              style={{
-                                objectFit: 'cover',
-                                borderRadius: '4px'
-                              }}
-                              onError={() => handleImageError(originalUrl, row.id)}
-                              onLoad={() => console.log(`[IMG] Gambar ${originalUrl} berhasil dimuat`)}
-                            />
-                          )}
-                        </TableCell>
-                        <TableCell align="center">
-                          <Tooltip title="Edit">
-                            <IconButton onClick={() => handleEdit(row)}>
-                              <EditIcon />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Hapus">
-                            <IconButton onClick={() => handleDelete(row.id)}>
-                              <DeleteIcon />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Jadikan Admin">
-                            <IconButton onClick={() => handleOpenAdminModal(row.id)}>
-                              <AdminPanelSettingsIcon />
-                            </IconButton>
-                          </Tooltip>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })
+                  rows.map((row) => (
+                    <TableRow key={row.id || row.nip}>
+                      <TableCell>{row.nip}</TableCell>
+                      <TableCell>{row.namalengkap}</TableCell>
+                      <TableCell>{row.email}</TableCell>
+                      <TableCell>{row.jabatan}</TableCell>
+                      <TableCell>
+                        {row.foto && row.foto !== '-' ? (
+                          <img
+                            src={`http://localhost:8080/${row.foto}`}
+                            alt={`Foto ${row.namalengkap}`}
+                            style={{
+                              width: '50px',
+                              height: '50px',
+                              objectFit: 'cover',
+                              borderRadius: '4px'
+                            }}
+                            onLoad={() => console.log(`[IMG] Gambar ${row.foto} berhasil dimuat`)}
+                            onError={(e) => {
+                              console.error(`[IMG] Gagal memuat gambar: ${row.foto}`)
+                              e.target.onerror = null
+                              e.target.src = '/default-avatar.png'
+                            }}
+                          />
+                        ) : (
+                          '-'
+                        )}
+                      </TableCell>
+                      <TableCell align="center">
+                        <Tooltip title="Edit">
+                          <IconButton onClick={() => handleEdit(row)}>
+                            <EditIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Hapus">
+                          <IconButton onClick={() => handleDelete(row.id)}>
+                            <DeleteIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Jadikan Admin">
+                          <IconButton onClick={() => handleOpenAdminModal(row.id)}>
+                            <AdminPanelSettingsIcon />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  ))
                 )}
               </TableBody>
             </Table>
@@ -805,8 +628,8 @@ export default function DataPegawai() {
             margin="normal"
             inputProps={{ maxLength: 20, pattern: '[0-9]*' }}
             disabled={loading}
-            error={showAlert && (!formData.nip || formData.nip.length > 20)}
-            helperText={showAlert && (!formData.nip ? 'NIP wajib diisi' : formData.nip.length > 20 ? 'NIP maksimal 20 digit' : '')}
+            error={showAlert && !formData.nip}
+            helperText={showAlert && !formData.nip ? 'NIP wajib diisi' : ''}
           />
           <TextField
             label="Nama Lengkap"
@@ -852,7 +675,6 @@ export default function DataPegawai() {
             margin="normal"
             disabled={loading}
             InputLabelProps={{ shrink: true }}
-            inputProps={{ accept: 'image/*' }}
           />
         </DialogContent>
         <DialogActions>
@@ -876,10 +698,9 @@ export default function DataPegawai() {
             fullWidth
             required
             margin="normal"
-            inputProps={{ maxLength: 20 }}
             disabled={loading}
-            error={showAlert && (!adminPassword || adminPassword.length > 20)}
-            helperText={showAlert && (!adminPassword ? 'Password wajib diisi' : adminPassword.length > 20 ? 'Password maksimal 20 karakter' : '')}
+            error={showAlert && !adminPassword}
+            helperText={showAlert && !adminPassword ? 'Password wajib diisi' : ''}
           />
           <FormControl fullWidth margin="normal" required>
             <InputLabel>Role</InputLabel>
@@ -891,6 +712,7 @@ export default function DataPegawai() {
               error={showAlert && !adminRole}
             >
               <MenuItem value="">Pilih Role</MenuItem>
+              <MenuItem value="ROLE000">Admin</MenuItem>
               <MenuItem value="ROLE001">Bendahara</MenuItem>
               <MenuItem value="ROLE002">Sekretaris</MenuItem>
             </Select>
