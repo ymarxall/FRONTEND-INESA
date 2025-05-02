@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import {
-  Box, Typography, Grid, Card, CardContent, CircularProgress, Fade, Chip, Button, Stack, Alert, Dialog, DialogTitle, DialogContent, DialogActions
+  Box, Typography, Grid, Card, CardContent, CircularProgress, Fade, Chip, Button, Alert, Dialog, DialogTitle, DialogContent, DialogActions
 } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import { useRouter } from 'next/navigation'
@@ -12,12 +12,12 @@ import MaleIcon from '@mui/icons-material/Male'
 import FemaleIcon from '@mui/icons-material/Female'
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet'
-import PaymentsIcon from '@mui/icons-material/Payments'
 import MailIcon from '@mui/icons-material/Mail'
 import SendIcon from '@mui/icons-material/Send'
 import AssignmentIcon from '@mui/icons-material/Assignment'
 import Breadcrumbs from '@mui/material/Breadcrumbs'
 import Link from '@mui/material/Link'
+import { API_ENDPOINTS, getHeaders } from '@/config/api'
 
 // Styled Components
 const DashboardCard = styled(Card)(({ theme }) => ({
@@ -71,19 +71,22 @@ const TextNoCursor = styled(Typography)({
   cursor: 'default',
 })
 
-// Fungsi fetch dengan timeout dan retry
 const fetchWithTimeout = async (url, options, timeout = 15000) => {
   const controller = new AbortController()
   const id = setTimeout(() => controller.abort(), timeout)
   try {
     console.log(`[FETCH] Mengirim permintaan ke: ${url}`)
     const response = await fetch(url, { ...options, signal: controller.signal })
+    if (!response.ok) {
+      const text = await response.text()
+      throw new Error(`HTTP error! status: ${response.status}, message: ${text}`)
+    }
     console.log(`[FETCH] Status: ${response.status}, Content-Type: ${response.headers.get('Content-Type')}`)
     clearTimeout(id)
-    return response
+    return response.json()
   } catch (error) {
     clearTimeout(id)
-    console.error(`[FETCH] Error ke ${url}:`, error)
+    console.error(`[FETCH] Error ke ${url}:`, error.message)
     throw error
   }
 }
@@ -106,50 +109,39 @@ export default function Dashboard() {
   const router = useRouter()
 
   useEffect(() => {
-    fetchStats(3)
+    fetchStats()
   }, [])
 
   const fetchStats = async (retryCount = 3) => {
     try {
       setLoading(true)
+      setError(null)
       const token = Cookies.get('token')
       if (!token) {
-        console.error('[FETCH] Token tidak ditemukan')
         setError('Token tidak ditemukan, silakan login kembali')
         return
       }
-      console.log('[FETCH] Mengambil statistik dengan token:', token)
 
-      const headers = {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'ngrok-skip-browser-warning': 'true',
-      }
+      const headers = getHeaders(token)
 
-      // Fetch data penduduk
-      const pendudukResponse = await fetchWithTimeout('http://192.168.1.85:8080/api/dashboard/stats', {
-        headers,
-        credentials: 'include',
-      })
-      if (!pendudukResponse.ok) {
-        const text = await pendudukResponse.text()
-        throw new Error(`Gagal mengambil data penduduk: ${pendudukResponse.status} ${text}`)
+      // Fetch data penduduk (langsung ke endpoint yang benar)
+      let pendudukData = { total: 0, laki: 0, perempuan: 0 }
+      try {
+        pendudukData = await fetchWithTimeout('http://192.168.1.85:8080/api/dashboard/stats', {
+          headers,
+          credentials: 'include',
+        })
+      } catch (error) {
+        console.error('Error fetching penduduk:', error)
       }
-      const pendudukData = await pendudukResponse.json()
 
       // Fetch data pemasukan dengan penanganan error
       let pemasukanData = { total: 0 }
       try {
-        const pemasukanResponse = await fetchWithTimeout('https://joyful-analysis-production.up.railway.app/api/laporan/pemasukan', {
+        pemasukanData = await fetchWithTimeout('https://joyful-analysis-production.up.railway.app/api/laporan/pemasukan', {
           headers,
           credentials: 'include',
         })
-        if (!pemasukanResponse.ok) {
-          const text = await pemasukanResponse.text()
-          console.error(`Gagal mengambil data pemasukan: ${pemasukanResponse.status} ${text}`)
-        } else {
-          pemasukanData = await pemasukanResponse.json()
-        }
       } catch (error) {
         console.error('Error fetching pemasukan:', error)
       }
@@ -157,72 +149,43 @@ export default function Dashboard() {
       // Fetch data pengeluaran dengan penanganan error
       let pengeluaranData = { total: 0 }
       try {
-        const pengeluaranResponse = await fetchWithTimeout('https://joyful-analysis-production.up.railway.app/api/laporan/pengeluaran', {
-          mode: "cors",
-          headers: {
-            "token": eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IjczMDYxNzEzMTEwMzAwMDIiLCJleHAiOjE3NDEyNDkyODl9.lOGDIUZToPIqq_two0QAqUx-uz9hNM1ZcTjitY0cMnA,
-            "Content-Type": "application/json"
-          },
+        pengeluaranData = await fetchWithTimeout('https://joyful-analysis-production.up.railway.app/api/laporan/pengeluaran', {
+          headers,
           credentials: 'include',
         })
-        if (!pengeluaranResponse.ok) {
-          const text = await pengeluaranResponse.text()
-          console.log(text)
-          console.error(`Gagal mengambil data pengeluaran: ${pengeluaranResponse.status} ${text}`)
-        } else {
-          pengeluaranData = await pengeluaranResponse.json()
-        }
       } catch (error) {
         console.error('Error fetching pengeluaran:', error)
       }
 
-      // Fetch data surat masuk
-      let suratMasukData = { total: 0 }
+      // Fetch data surat masuk menggunakan API_ENDPOINTS seperti Dashboard Sekretaris
+      let suratMasukData = []
       try {
-        const suratMasukResponse = await fetchWithTimeout('http://192.168.1.85:8088/api/suratmasuk', {
+        suratMasukData = await fetchWithTimeout(API_ENDPOINTS.SEKRETARIS.SURAT_MASUK_GET_ALL, {
           headers,
           credentials: 'include',
         })
-        if (!suratMasukResponse.ok) {
-          const text = await suratMasukResponse.text()
-          console.error(`Gagal mengambil data surat masuk: ${suratMasukResponse.status} ${text}`)
-        } else {
-          suratMasukData = await suratMasukResponse.json()
-        }
       } catch (error) {
         console.error('Error fetching surat masuk:', error)
       }
 
-      // Fetch data surat keluar
-      let suratKeluarData = { total: 0 }
+      // Fetch data surat keluar menggunakan API_ENDPOINTS seperti Dashboard Sekretaris
+      let suratKeluarData = []
       try {
-        const suratKeluarResponse = await fetchWithTimeout('http://192.168.1.85:8088/api/suratkeluar', {
+        suratKeluarData = await fetchWithTimeout(API_ENDPOINTS.SEKRETARIS.SURAT_KELUAR_GET_ALL, {
           headers,
           credentials: 'include',
         })
-        if (!suratKeluarResponse.ok) {
-          const text = await suratKeluarResponse.text()
-          console.error(`Gagal mengambil data surat keluar: ${suratKeluarResponse.status} ${text}`)
-        } else {
-          suratKeluarData = await suratKeluarResponse.json()
-        }
       } catch (error) {
         console.error('Error fetching surat keluar:', error)
       }
 
-      // Fetch data permohonan surat
-      let permohonanSuratData = { total: 0 }
+      // Fetch data permohonan surat menggunakan API_ENDPOINTS seperti Dashboard Sekretaris
+      let permohonanSuratData = []
       try {
-        const permohonanSuratResponse = await fetchWithTimeout('http://192.168.1.85:8088/api/permohonansurat', {
+        permohonanSuratData = await fetchWithTimeout(API_ENDPOINTS.SEKRETARIS.PERMOHONAN_SURAT_GET_ALL, {
           headers,
           credentials: 'include',
         })
-        if (!permohonanSuratResponse.ok) {
-          const text = await permohonanSuratResponse.text()
-          console.error(`Gagal mengambil data permohonan surat: ${permohonanSuratResponse.status} ${text}`)
-        } else {
-          permohonanSuratData = await permohonanSuratResponse.json()
-        }
       } catch (error) {
         console.error('Error fetching permohonan surat:', error)
       }
@@ -233,9 +196,9 @@ export default function Dashboard() {
         perempuan: pendudukData.perempuan || 0,
         totalPemasukan: pemasukanData.total || 0,
         totalPengeluaran: pengeluaranData.total || 0,
-        suratMasuk: suratMasukData.total || 0,
-        suratKeluar: suratKeluarData.total || 0,
-        permohonanSurat: permohonanSuratData.total || 0,
+        suratMasuk: suratMasukData.length || 0,
+        suratKeluar: suratKeluarData.length || 0,
+        permohonanSurat: permohonanSuratData.length || 0,
       })
     } catch (error) {
       console.error('[FETCH] Gagal mengambil data statistik:', error)
@@ -295,7 +258,6 @@ export default function Dashboard() {
 
       <Fade in={!loading}>
         <Box>
-          {/* Header */}
           <HeaderBox>
             <Breadcrumbs sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 1 }}>
               <Link underline="hover" color="inherit" href="/">
@@ -331,13 +293,11 @@ export default function Dashboard() {
             </Box>
           ) : (
             <>
-              {/* Bagian Statistik Penduduk dan Keuangan */}
               <Box sx={{ bgcolor: 'white', borderRadius: '12px', p: 3, mb: 4, boxShadow: '0 4px 16px rgba(0, 0, 0, 0.05)' }}>
                 <TextNoCursor variant="h5" sx={{ fontWeight: 600, color: '#1a237e', mb: 3 }}>
                   Statistik Desa
                 </TextNoCursor>
                 <Grid container spacing={2}>
-                  {/* Total Penduduk */}
                   <Grid item xs={12} sm={6} md={4}>
                     <StatCard>
                       <CardContent sx={{ textAlign: 'center', p: 0 }}>
@@ -353,8 +313,6 @@ export default function Dashboard() {
                       </CardContent>
                     </StatCard>
                   </Grid>
-
-                  {/* Laki-laki */}
                   <Grid item xs={12} sm={6} md={4}>
                     <StatCard>
                       <CardContent sx={{ textAlign: 'center', p: 0 }}>
@@ -377,8 +335,6 @@ export default function Dashboard() {
                       </CardContent>
                     </StatCard>
                   </Grid>
-
-                  {/* Perempuan */}
                   <Grid item xs={12} sm={6} md={4}>
                     <StatCard>
                       <CardContent sx={{ textAlign: 'center', p: 0 }}>
@@ -402,7 +358,6 @@ export default function Dashboard() {
                     </StatCard>
                   </Grid>
                 </Grid>
-
                 <Box sx={{ mt: 3 }}>
                   <TextNoCursor variant="body1" sx={{ fontWeight: 600, color: '#1a237e', mb: 1 }}>
                     Detail Keuangan
@@ -435,8 +390,6 @@ export default function Dashboard() {
                   </Grid>
                 </Box>
               </Box>
-
-              {/* Bagian Statistik Surat */}
               <Box sx={{ bgcolor: 'white', borderRadius: '12px', p: 3, boxShadow: '0 4px 16px rgba(0, 0, 0, 0.05)' }}>
                 <TextNoCursor variant="h5" sx={{ fontWeight: 600, color: '#1a237e', mb: 3 }}>
                   Statistik Surat
@@ -482,7 +435,6 @@ export default function Dashboard() {
         </Box>
       </Fade>
 
-      {/* Dialog untuk Detail Surat */}
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
         <DialogTitle>Detail {dialogContent?.jenis}</DialogTitle>
         <DialogContent>
