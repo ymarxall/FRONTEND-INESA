@@ -25,6 +25,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { TypeAnimation } from 'react-type-animation';
 import { Description as DescriptionIcon, Send as SendIcon, Close as CloseIcon } from '@mui/icons-material';
 import './styles.css';
+import { API_ENDPOINTS, getHeaders } from '@/config/api';
+
 
 const Notification = ({ pesan, tipe, onTutup }) => {
   useEffect(() => {
@@ -289,7 +291,7 @@ const Home = () => {
         tanggal_kematian: formData.tgl_kematian || undefined,
         penyebab_kematian: formData.penyebab_kematian || undefined,
       };
-      const response = await fetch('http://192.168.1.85:8080/api/request/surat', {
+      const response = await fetch(API_ENDPOINTS.SEKRETARIS.PERMOHONAN_SURAT_ADD, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(dataToSend),
