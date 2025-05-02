@@ -5,7 +5,7 @@ import {
   Paper, Button, Typography, Card, CardContent, IconButton,
   CircularProgress, TablePagination, Box, styled,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField,
-  Chip, MenuItem, Select, FormControl
+  Chip, MenuItem, Select, FormControl, InputLabel
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import PrintIcon from '@mui/icons-material/Print';
@@ -74,7 +74,6 @@ const formatTanggalIndonesia = (tanggal) => {
 const safeString = (value) => {
   if (value == null) return '...........................';
   if (typeof value === 'object') {
-    // Jika value adalah objek, coba ambil properti 'name' atau konversi ke string
     return value.name ? String(value.name) : '...........................';
   }
   return String(value);
@@ -84,7 +83,6 @@ const safeString = (value) => {
 const safeFormString = (value) => {
   if (value == null) return '';
   if (typeof value === 'object') {
-    // Jika value adalah objek, coba ambil properti 'name' atau kembalikan string kosong
     return value.name ? String(value.name) : '';
   }
   return String(value);
@@ -188,9 +186,10 @@ const suratTemplates = {
       { name: 'alamat_lengkap', label: 'Alamat Lengkap', type: 'text', placeholder: 'Masukkan Alamat Lengkap', disabled: true },
       { name: 'nomor_hp', label: 'Nomor HP', type: 'text', placeholder: 'Masukkan Nomor HP' },
       { name: 'dokumen_url', label: 'Lampiran Dokumen', type: 'file', accept: '.pdf,.jpg,.png' },
-      { name: 'ditujukan', label: 'Ditujukan Ke -', type: 'text', placeholder: 'Penerima Surat' },
+      { name: 'ditujukan', label: 'Ditujukan Ke', type: 'text', placeholder: 'Penerima Surat' },
       { name: 'ttd_nama', label: 'Yang Bertandatangan', type: 'select', options: ['Kepala Desa', 'Sekretaris Desa'] },
-      { name: 'nip', label: 'NIP', type: 'text', placeholder: 'NIP akan terisi otomatis', disabled: true }
+      { name: 'nip', label: 'NIP', type: 'text', placeholder: 'NIP akan terisi otomatis', disabled: true },
+      { name: 'status', label: 'Status', type: 'select', options: ['Diproses', 'Selesai', 'Ditolak'] }
     ]
   },
   'Surat Keterangan Tidak Mampu': {
@@ -295,9 +294,10 @@ const suratTemplates = {
       { name: 'keperluan', label: 'Keperluan', type: 'text', placeholder: 'Masukkan Keperluan' },
       { name: 'nomor_hp', label: 'Nomor HP', type: 'text', placeholder: 'Masukkan Nomor HP' },
       { name: 'dokumen_url', label: 'Lampiran Dokumen', type: 'file', accept: '.pdf,.jpg,.png' },
-      { name: 'ditujukan', label: 'Ditujukan Ke -', type: 'text', placeholder: 'Penerima Surat' },
+      { name: 'ditujukan', label: 'Ditujukan Ke', type: 'text', placeholder: 'Penerima Surat' },
       { name: 'ttd_nama', label: 'Yang Bertandatangan', type: 'select', options: ['Kepala Desa', 'Sekretaris Desa'] },
-      { name: 'nip', label: 'NIP', type: 'text', placeholder: 'NIP akan terisi otomatis', disabled: true }
+      { name: 'nip', label: 'NIP', type: 'text', placeholder: 'NIP akan terisi otomatis', disabled: true },
+      { name: 'status', label: 'Status', type: 'select', options: ['Diproses', 'Selesai', 'Ditolak'] }
     ]
   },
   'Surat Keterangan Usaha': {
@@ -411,9 +411,10 @@ const suratTemplates = {
       { name: 'alamat_usaha', label: 'Alamat Usaha', type: 'text', placeholder: 'Masukkan Alamat Usaha' },
       { name: 'nomor_hp', label: 'Nomor HP', type: 'text', placeholder: 'Masukkan Nomor HP' },
       { name: 'dokumen_url', label: 'Lampiran Dokumen', type: 'file', accept: '.pdf,.jpg,.png' },
-      { name: 'ditujukan', label: 'Ditujukan Ke -', type: 'text', placeholder: 'Penerima Surat' },
+      { name: 'ditujukan', label: 'Ditujukan Ke', type: 'text', placeholder: 'Penerima Surat' },
       { name: 'ttd_nama', label: 'Yang Bertandatangan', type: 'select', options: ['Kepala Desa', 'Sekretaris Desa'] },
-      { name: 'nip', label: 'NIP', type: 'text', placeholder: 'NIP akan terisi otomatis', disabled: true }
+      { name: 'nip', label: 'NIP', type: 'text', placeholder: 'NIP akan terisi otomatis', disabled: true },
+      { name: 'status', label: 'Status', type: 'select', options: ['Diproses', 'Selesai', 'Ditolak'] }
     ]
   },
   'Surat Keterangan Pindah': {
@@ -523,9 +524,10 @@ const suratTemplates = {
       { name: 'keperluan', label: 'Keperluan', type: 'text', placeholder: 'Masukkan Keperluan' },
       { name: 'nomor_hp', label: 'Nomor HP', type: 'text', placeholder: 'Masukkan Nomor HP' },
       { name: 'dokumen_url', label: 'Lampiran Dokumen', type: 'file', accept: '.pdf,.jpg,.png' },
-      { name: 'ditujukan', label: 'Ditujukan Ke -', type: 'text', placeholder: 'Penerima Surat' },
+      { name: 'ditujukan', label: 'Ditujukan Ke', type: 'text', placeholder: 'Penerima Surat' },
       { name: 'ttd_nama', label: 'Yang Bertandatangan', type: 'select', options: ['Kepala Desa', 'Sekretaris Desa'] },
-      { name: 'nip', label: 'NIP', type: 'text', placeholder: 'NIP akan terisi otomatis', disabled: true }
+      { name: 'nip', label: 'NIP', type: 'text', placeholder: 'NIP akan terisi otomatis', disabled: true },
+      { name: 'status', label: 'Status', type: 'select', options: ['Diproses', 'Selesai', 'Ditolak'] }
     ]
   },
   'Surat Pengantar': {
@@ -613,9 +615,10 @@ const suratTemplates = {
       { name: 'keperluan', label: 'Keperluan', type: 'text', placeholder: 'Masukkan Keperluan' },
       { name: 'nomor_hp', label: 'Nomor HP', type: 'text', placeholder: 'Masukkan Nomor HP' },
       { name: 'dokumen_url', label: 'Lampiran Dokumen', type: 'file', accept: '.pdf,.jpg,.png' },
-      { name: 'ditujukan', label: 'Ditujukan Ke -', type: 'text', placeholder: 'Penerima Surat' },
+      { name: 'ditujukan', label: 'Ditujukan Ke', type: 'text', placeholder: 'Penerima Surat' },
       { name: 'ttd_nama', label: 'Yang Bertandatangan', type: 'select', options: ['Kepala Desa', 'Sekretaris Desa'] },
-      { name: 'nip', label: 'NIP', type: 'text', placeholder: 'NIP akan terisi otomatis', disabled: true }
+      { name: 'nip', label: 'NIP', type: 'text', placeholder: 'NIP akan terisi otomatis', disabled: true },
+      { name: 'status', label: 'Status', type: 'select', options: ['Diproses', 'Selesai', 'Ditolak'] }
     ]
   },
   'Surat Keterangan Kelahiran': {
@@ -724,9 +727,10 @@ const suratTemplates = {
       { name: 'alamat_lengkap', label: 'Alamat Orang Tua', type: 'text', placeholder: 'Masukkan Alamat Orang Tua', disabled: true },
       { name: 'nomor_hp', label: 'Nomor HP', type: 'text', placeholder: 'Masukkan Nomor HP' },
       { name: 'dokumen_url', label: 'Lampiran Dokumen', type: 'file', accept: '.pdf,.jpg,.png' },
-      { name: 'ditujukan', label: 'Ditujukan Ke -', type: 'text', placeholder: 'Penerima Surat' },
+      { name: 'ditujukan', label: 'Ditujukan Ke', type: 'text', placeholder: 'Penerima Surat' },
       { name: 'ttd_nama', label: 'Yang Bertandatangan', type: 'select', options: ['Kepala Desa', 'Sekretaris Desa'] },
-      { name: 'nip', label: 'NIP', type: 'text', placeholder: 'NIP akan terisi otomatis', disabled: true }
+      { name: 'nip', label: 'NIP', type: 'text', placeholder: 'NIP akan terisi otomatis', disabled: true },
+      { name: 'status', label: 'Status', type: 'select', options: ['Diproses', 'Selesai', 'Ditolak'] }
     ]
   },
   'Surat Keterangan Kematian': {
@@ -835,9 +839,10 @@ const suratTemplates = {
       { name: 'penyebab_kematian', label: 'Penyebab Kematian', type: 'text', placeholder: 'Masukkan Penyebab Kematian' },
       { name: 'nomor_hp', label: 'Nomor HP', type: 'text', placeholder: 'Masukkan Nomor HP' },
       { name: 'dokumen_url', label: 'Lampiran Dokumen', type: 'file', accept: '.pdf,.jpg,.png' },
-      { name: 'ditujukan', label: 'Ditujukan Ke -', type: 'text', placeholder: 'Penerima Surat' },
+      { name: 'ditujukan', label: 'Ditujukan Ke', type: 'text', placeholder: 'Penerima Surat' },
       { name: 'ttd_nama', label: 'Yang Bertandatangan', type: 'select', options: ['Kepala Desa', 'Sekretaris Desa'] },
-      { name: 'nip', label: 'NIP', type: 'text', placeholder: 'NIP akan terisi otomatis', disabled: true }
+      { name: 'nip', label: 'NIP', type: 'text', placeholder: 'NIP akan terisi otomatis', disabled: true },
+      { name: 'status', label: 'Status', type: 'select', options: ['Diproses', 'Selesai', 'Ditolak'] }
     ]
   }
 };
@@ -864,11 +869,10 @@ export default function PermohonanSurat() {
         });
         if (!response.ok) throw new Error('Gagal memuat permohonan');
         const data = await response.json();
-        // Pastikan data.data adalah array, fallback ke [] jika tidak valid
         setPermohonanList(Array.isArray(data.data) ? data.data : []);
       } catch (err) {
         setError('Gagal memuat data: ' + err.message);
-        setPermohonanList([]); // Fallback ke array kosong
+        setPermohonanList([]);
       } finally {
         setLoading(false);
       }
@@ -878,7 +882,7 @@ export default function PermohonanSurat() {
 
   // Buka form untuk memproses permohonan
   const handleOpenForm = (permohonan) => {
-    console.log('Data permohonan:', permohonan); // Debugging
+    console.log('Data permohonan:', permohonan);
     setSelectedPermohonan(permohonan);
     const template = suratTemplates[permohonan.jenis_surat];
     if (!template) {
@@ -907,7 +911,7 @@ export default function PermohonanSurat() {
       no_surat: '',
       ditujukan: safeFormString(permohonan.ditujukan),
       ttd_nama: '',
-      ttd_nama_lengkap: '', // Inisialisasi untuk nama lengkap penandatangan
+      ttd_nama_lengkap: '',
       nip: '',
       pekerjaan: safeFormString(permohonan.pekerjaan),
       keperluan: safeFormString(permohonan.keperluan),
@@ -924,7 +928,7 @@ export default function PermohonanSurat() {
       nomor_hp: safeFormString(permohonan.nomor_hp),
     };
 
-    console.log('Form data:', formData); // Debugging
+    console.log('Form data:', formData);
     setFormData(formData);
   };
 
@@ -941,7 +945,7 @@ export default function PermohonanSurat() {
     const { name, value } = e.target;
     let updatedFormData = { ...formData, [name]: value };
 
-    // Jika ttd_nama berubah, perbarui nip dan ttd_nama_lengkap secara otomatis
+    // Jika ttd_nama berubah, perbarui nip dan ttd_nama_lengkap
     if (name === 'ttd_nama') {
       updatedFormData.nip = penandatanganOptions[value]?.nip || '';
       updatedFormData.ttd_nama_lengkap = penandatanganOptions[value]?.namaLengkap || '';
@@ -958,7 +962,7 @@ export default function PermohonanSurat() {
     }
   };
 
-  // Generate preview surat
+  // Validasi dan generate preview surat
   const handlePreview = () => {
     if (!selectedPermohonan) {
       setError('Pilih permohonan terlebih dahulu.');
@@ -973,15 +977,13 @@ export default function PermohonanSurat() {
       setError('Isi formulir terlebih dahulu.');
       return null;
     }
-    // Validasi ttd_nama
-    if (!formData.ttd_nama) {
-      setError('Silakan pilih "Yang Bertandatangan".');
-      return null;
-    }
-    // Validasi ttd_nama_lengkap
-    if (!formData.ttd_nama_lengkap) {
-      setError('Nama Yang Bertandatangan tidak tersedia.');
-      return null;
+    // Validasi field wajib
+    const requiredFields = ['no_surat', 'ditujukan', 'ttd_nama', 'ttd_nama_lengkap', 'status'];
+    for (const field of requiredFields) {
+      if (!formData[field]) {
+        setError(`Field "${field}" wajib diisi.`);
+        return null;
+      }
     }
     const content = suratTemplates[selectedTemplate].template(formData);
     return content;
@@ -1012,68 +1014,120 @@ export default function PermohonanSurat() {
     try {
       setLoading(true);
 
-      const contentElement = document.createElement('div');
-      contentElement.innerHTML = previewContent;
-      contentElement.style.padding = '20px';
-      document.body.appendChild(contentElement);
-
-      const opt = {
-        margin: [10, 10, 10, 10],
-        filename: `${selectedPermohonan.jenis_surat}_${formData.no_surat}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      };
-
-      const pdfBlob = await html2pdf()
-        .set(opt)
-        .from(contentElement)
-        .output('blob');
-
-      document.body.removeChild(contentElement);
-
-      let formDataToSend = new FormData();
-      formDataToSend.append('id', selectedPermohonan.id);
-      formDataToSend.append('nomor', formData.no_surat || '');
-      formDataToSend.append('tanggal', formData.tanggal || new Date().toISOString().split('T')[0]);
-      formDataToSend.append('perihal', formData.keterangan || selectedPermohonan.jenis_surat);
-      formDataToSend.append('ditujukan', formData.ditujukan || '');
-      formDataToSend.append('title', selectedPermohonan.jenis_surat);
-      formDataToSend.append('file', pdfBlob, opt.filename);
-
-      console.log('Data yang dikirim ke server:');
-      for (let pair of formDataToSend.entries()) {
-        console.log(`${pair[0]}: ${pair[1]}`);
+      // Validasi status
+      const validStatuses = ['Diproses', 'Selesai', 'Ditolak'];
+      if (!validStatuses.includes(formData.status)) {
+        throw new Error('Status harus salah satu dari: Diproses, Selesai, atau Ditolak.');
       }
 
-      const response = await fetch(API_ENDPOINTS.SURAT_KELUAR_ADD, {
-        method: 'POST',
-        body: formDataToSend,
-      });
+      // Jika status adalah Ditolak, hanya update status tanpa generate PDF
+      if (formData.status === 'Ditolak') {
+        const updateStatusResponse = await fetch(
+          API_ENDPOINTS.PERMOHONAN_SURAT_UPDATE_STATUS(selectedPermohonan.id),
+          {
+            method: 'PATCH',
+            headers: {
+              ...getHeaders(),
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ status: 'Ditolak' }),
+          }
+        );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Detail kesalahan dari server:', errorData);
-        if (errorData.message && errorData.message.includes('nomor')) {
-          throw new Error('Nomor surat sudah digunakan, silakan gunakan nomor lain.');
+        if (!updateStatusResponse.ok) {
+          const updateErrorData = await updateStatusResponse.json();
+          console.error('Detail kesalahan update status:', updateErrorData);
+          throw new Error(
+            updateErrorData.message || `Gagal memperbarui status (Status: ${updateStatusResponse.status})`
+          );
         }
-        if (errorData.message && errorData.message.includes('ID')) {
-          throw new Error('ID permohonan tidak valid, harus berupa angka.');
-        }
-        if (errorData.message && errorData.message.includes('PDF')) {
-          throw new Error('File harus berupa PDF.');
-        }
-        if (errorData.message && errorData.message.includes('field wajib')) {
-          throw new Error('Semua field harus diisi.');
-        }
-        if (errorData.message && errorData.message.includes('tanggal tidak valid')) {
-          throw new Error('Format tanggal tidak valid, gunakan YYYY-MM-DD.');
-        }
-        throw new Error(`Gagal menyimpan surat: ${errorData.message || 'Kesalahan server'}`);
+
+        setPermohonanList((prevList) =>
+          prevList.map((item) =>
+            item.id === selectedPermohonan.id
+              ? { ...item, status: 'Ditolak' }
+              : item
+          )
+        );
+
+        handleCloseForm();
+        alert('Status permohonan berhasil diperbarui ke Ditolak.');
+        return;
       }
 
-      const responseData = await response.json();
-      console.log('Response dari server:', responseData);
+      // Generate PDF untuk status Selesai
+      if (formData.status === 'Selesai') {
+        if (!previewContent) {
+          throw new Error('Silakan generate preview surat terlebih dahulu.');
+        }
+
+        const contentElement = document.createElement('div');
+        contentElement.innerHTML = previewContent;
+        contentElement.style.padding = '20px';
+        document.body.appendChild(contentElement);
+
+        const opt = {
+          margin: [10, 10, 10, 10],
+          filename: `${selectedPermohonan.jenis_surat}_${formData.no_surat}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        };
+
+        const pdfBlob = await html2pdf()
+          .set(opt)
+          .from(contentElement)
+          .output('blob');
+
+        document.body.removeChild(contentElement);
+
+        let formDataToSend = new FormData();
+        formDataToSend.append('id', selectedPermohonan.id);
+        formDataToSend.append('nomor', formData.no_surat || '');
+        formDataToSend.append('tanggal', formData.tanggal || new Date().toISOString().split('T')[0]);
+        formDataToSend.append('perihal', formData.keterangan || selectedPermohonan.jenis_surat);
+        formDataToSend.append('ditujukan', formData.ditujukan || '');
+        formDataToSend.append('title', selectedPermohonan.jenis_surat);
+        formDataToSend.append('file', pdfBlob, opt.filename);
+        if (formData.dokumen_url instanceof File) {
+          formDataToSend.append('dokumen_url', formData.dokumen_url);
+        }
+
+        console.log('Data yang dikirim ke SURAT_KELUAR_ADD:');
+        for (let pair of formDataToSend.entries()) {
+          console.log(`${pair[0]}: ${pair[1]}`);
+        }
+
+        const response = await fetch(API_ENDPOINTS.SURAT_KELUAR_ADD, {
+          method: 'POST',
+          headers: getHeaders(),
+          body: formDataToSend,
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('Detail kesalahan dari server:', errorData);
+          if (errorData.message && errorData.message.includes('nomor')) {
+            throw new Error('Nomor surat sudah digunakan, silakan gunakan nomor lain.');
+          }
+          if (errorData.message && errorData.message.includes('ID')) {
+            throw new Error('ID permohonan tidak valid, harus berupa angka.');
+          }
+          if (errorData.message && errorData.message.includes('PDF')) {
+            throw new Error('File harus berupa PDF.');
+          }
+          if (errorData.message && errorData.message.includes('field wajib')) {
+            throw new Error('Semua field harus diisi.');
+          }
+          if (errorData.message && errorData.message.includes('tanggal tidak valid')) {
+            throw new Error('Format tanggal tidak valid, gunakan YYYY-MM-DD.');
+          }
+          throw new Error(`Gagal menyimpan surat: ${errorData.message || 'Kesalahan server'}`);
+        }
+
+        const responseData = await response.json();
+        console.log('Response dari SURAT_KELUAR_ADD:', responseData);
+      }
 
       // Perbarui status permohonan
       const updateStatusResponse = await fetch(
@@ -1081,9 +1135,10 @@ export default function PermohonanSurat() {
         {
           method: 'PATCH',
           headers: {
+            ...getHeaders(),
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ status: 'Selesai' }),
+          body: JSON.stringify({ status: formData.status }),
         }
       );
 
@@ -1095,22 +1150,20 @@ export default function PermohonanSurat() {
         );
       }
 
-      // Perbarui permohonanList dengan status baru dan URL file (jika ada)
+      console.log(`Status berhasil diperbarui ke ${formData.status}`);
+
+      // Perbarui permohonanList
       setPermohonanList((prevList) =>
         prevList.map((item) =>
           item.id === selectedPermohonan.id
-            ? {
-                ...item,
-                status: 'Selesai',
-                file_url: responseData.file_url || item.file_url, // Simpan URL file jika dikembalikan oleh server
-              }
+            ? { ...item, status: formData.status }
             : item
         )
       );
 
       setPreviewContent('');
       handleCloseForm();
-      alert('Surat berhasil disimpan dan status diperbarui.');
+      alert(`Surat berhasil disimpan dan status diperbarui ke ${formData.status}.`);
     } catch (err) {
       setError('Gagal menyimpan surat: ' + err.message);
       console.error('Kesalahan di handleSaveSurat:', err);
@@ -1244,7 +1297,7 @@ export default function PermohonanSurat() {
                               variant="contained"
                               size="small"
                               onClick={() => handleOpenForm(permohonan)}
-                              disabled={permohonan.status === 'Selesai'}
+                              disabled={permohonan.status === 'Selesai' || permohonan.status === 'Ditolak'}
                             >
                               Proses
                             </Button>
