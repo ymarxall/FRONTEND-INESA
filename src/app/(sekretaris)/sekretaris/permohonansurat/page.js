@@ -12,7 +12,6 @@ import PrintIcon from '@mui/icons-material/Print';
 import SaveIcon from '@mui/icons-material/Save';
 import { API_ENDPOINTS, getHeaders } from '@/config/api';
 import { useRouter } from 'next/navigation';
-import html2pdf from 'html2pdf.js';
 
 // Styled components
 const StyledCard = styled(Card)({
@@ -70,25 +69,8 @@ const formatTanggalIndonesia = (tanggal) => {
   return `${date.getDate()} ${bulan[date.getMonth()]} ${date.getFullYear()}`;
 };
 
-// Fungsi untuk menangani nilai null, undefined, atau objek
-const safeString = (value) => {
-  if (value == null) return '...........................';
-  if (typeof value === 'object') {
-    // Jika value adalah objek, coba ambil properti 'name' atau konversi ke string
-    return value.name ? String(value.name) : '...........................';
-  }
-  return String(value);
-};
-
-// Fungsi untuk menangani nilai form (khususnya untuk inisialisasi formData)
-const safeFormString = (value) => {
-  if (value == null) return '';
-  if (typeof value === 'object') {
-    // Jika value adalah objek, coba ambil properti 'name' atau kembalikan string kosong
-    return value.name ? String(value.name) : '';
-  }
-  return String(value);
-};
+// Fungsi untuk menangani nilai null atau undefined
+const safeString = (value) => (value != null ? String(value) : '...........................');
 
 // Template Surat
 const suratTemplates = {
@@ -96,7 +78,7 @@ const suratTemplates = {
     title: 'Surat Keterangan Domisili',
     template: (data) => {
       const tanggalPembuatan = formatTanggalIndonesia(new Date());
-      return `
+     return `
         <div style="font-family: 'Times New Roman', serif; line-height: 1.5; max-width: 800px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px;">
             <div style="display: inline-flex; align-items: center;">
@@ -539,7 +521,7 @@ const suratTemplates = {
               <img src="/image.png" alt="Logo Desa" style="height: 80px; margin-right: 20px;" />
               <div>
                 <h2 style="margin: 0;">PEMERINTAH DESA BONTO UJUNG</h2>
-                <h3 style="margin: 5px 0;">KECAMATAN TAROWANG - KABUPATEN JENEPONTO</h3>
+                <h3 style="margin: 5px 0;">KECAMATAN TAROWANG - nal KABUPATEN JENEPONTO</h3>
                 <p style="margin: 0;">Jl. Poros Tarowang No. 10, Kode Pos 92351</p>
               </div>
             </div>
@@ -858,17 +840,15 @@ export default function PermohonanSurat() {
     const fetchPermohonan = async () => {
       setLoading(true);
       try {
-        const response = await fetch(API_ENDPOINTS.PERMOHONAN_SURAT_GET_ALL, {
+        const response = await fetch(API_ENDPOINTS.SEKRETARIS.PERMOHONAN_SURAT_GET_ALL, {
           method: 'GET',
           headers: getHeaders(),
         });
         if (!response.ok) throw new Error('Gagal memuat permohonan');
         const data = await response.json();
-        // Pastikan data.data adalah array, fallback ke [] jika tidak valid
-        setPermohonanList(Array.isArray(data.data) ? data.data : []);
+        setPermohonanList(data);
       } catch (err) {
         setError('Gagal memuat data: ' + err.message);
-        setPermohonanList([]); // Fallback ke array kosong
       } finally {
         setLoading(false);
       }
@@ -893,6 +873,9 @@ export default function PermohonanSurat() {
       if (isNaN(date.getTime())) return '';
       return date.toISOString().split('T')[0];
     };
+
+    // Konversi null/undefined ke string kosong
+    const safeFormString = (value) => (value != null ? String(value) : '');
 
     const formData = {
       nama_lengkap: safeFormString(permohonan.nama_lengkap),
@@ -1009,6 +992,7 @@ export default function PermohonanSurat() {
 
   // Simpan surat ke server
   const handleSaveSurat = async () => {
+    if (typeof window === 'undefined') return; // Pastikan hanya berjalan di client-side
     try {
       setLoading(true);
 
@@ -1025,6 +1009,8 @@ export default function PermohonanSurat() {
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
       };
 
+      // Dynamic import html2pdf.js
+      const { default: html2pdf } = await import('html2pdf.js');
       const pdfBlob = await html2pdf()
         .set(opt)
         .from(contentElement)
@@ -1046,7 +1032,7 @@ export default function PermohonanSurat() {
         console.log(`${pair[0]}: ${pair[1]}`);
       }
 
-      const response = await fetch(API_ENDPOINTS.SURAT_KELUAR_ADD, {
+      const response = await fetch(API_ENDPOINTS.SEKRETARIS.SURAT_KELUAR_ADD, {
         method: 'POST',
         body: formDataToSend,
       });
@@ -1077,7 +1063,7 @@ export default function PermohonanSurat() {
 
       // Perbarui status permohonan
       const updateStatusResponse = await fetch(
-        API_ENDPOINTS.PERMOHONAN_SURAT_UPDATE_STATUS(selectedPermohonan.id),
+        API_ENDPOINTS.SEKRETARIS.PERMOHONAN_SURAT_UPDATE_STATUS(selectedPermohonan.id),
         {
           method: 'PATCH',
           headers: {
@@ -1256,7 +1242,9 @@ export default function PermohonanSurat() {
               </TableContainer>
               <TablePagination
                 rowsPerPageOptions={[5, 10, 25]}
-                component="div"
+               
+
+ component="div"
                 count={permohonanList.length}
                 rowsPerPage={rowsPerPage}
                 page={page}

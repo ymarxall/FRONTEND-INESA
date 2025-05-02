@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react' // Tambahkan Suspense
 import { useSearchParams, useRouter } from 'next/navigation'
 import {
   Box,
@@ -12,39 +12,8 @@ import {
 } from '@mui/material'
 import { styled } from '@mui/material/styles'
 
-const FormContainer = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
-  minHeight: '100vh',
-  background: 'linear-gradient(135deg, #1a237e 0%, #ffffff 100%)',
-  padding: '24px',
-}))
-
-const FormBox = styled(Box)(({ theme }) => ({
-  backgroundColor: '#ffffff',
-  borderRadius: '16px',
-  padding: '32px',
-  boxShadow: '0 4px 20px 0 rgba(0,0,0,0.1)',
-  width: '100%',
-  maxWidth: '400px',
-}))
-
-const SubmitButton = styled(Button)(({ theme }) => ({
-  backgroundColor: '#1a237e',
-  color: 'white',
-  borderRadius: '12px',
-  textTransform: 'none',
-  fontWeight: 600,
-  padding: '12px 24px',
-  marginTop: '16px',
-  '&:hover': {
-    backgroundColor: '#0d47a1',
-  },
-}))
-
-export default function ResetPassword() {
+// Komponen utama untuk halaman reset password
+function ResetPasswordContent() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -70,7 +39,7 @@ export default function ResetPassword() {
 
     try {
       setLoading(true)
-      const response = await fetch(`http://localhost:8080/api/user/reset-password?token=${token}`, {
+      const response = await fetch(`http://192.168.1.85:8080/api/user/reset-password?token=${token}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -131,3 +100,45 @@ export default function ResetPassword() {
     </FormContainer>
   )
 }
+
+// Komponen utama dengan Suspense
+export default function ResetPassword() {
+  return (
+    <Suspense fallback={<CircularProgress sx={{ position: 'absolute', top: '50%', left: '50%' }} />}>
+      <ResetPasswordContent />
+    </Suspense>
+  )
+}
+
+// Styled components (tidak berubah)
+const FormContainer = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  minHeight: '100vh',
+  background: 'linear-gradient(135deg, #1a237e 0%, #ffffff 100%)',
+  padding: '24px',
+}))
+
+const FormBox = styled(Box)(({ theme }) => ({
+  backgroundColor: '#ffffff',
+  borderRadius: '16px',
+  padding: '32px',
+  boxShadow: '0 4px 20px 0 rgba(0,0,0,0.1)',
+  width: '100%',
+  maxWidth: '400px',
+}))
+
+const SubmitButton = styled(Button)(({ theme }) => ({
+  backgroundColor: '#1a237e',
+  color: 'white',
+  borderRadius: '12px',
+  textTransform: 'none',
+  fontWeight: 600,
+  padding: '12px 24px',
+  marginTop: '16px',
+  '&:hover': {
+    backgroundColor: '#0d47a1',
+  },
+}))
