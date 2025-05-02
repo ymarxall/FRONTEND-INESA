@@ -70,8 +70,25 @@ const formatTanggalIndonesia = (tanggal) => {
   return `${date.getDate()} ${bulan[date.getMonth()]} ${date.getFullYear()}`;
 };
 
-// Fungsi untuk menangani nilai null atau undefined
-const safeString = (value) => (value != null ? String(value) : '...........................');
+// Fungsi untuk menangani nilai null, undefined, atau objek
+const safeString = (value) => {
+  if (value == null) return '...........................';
+  if (typeof value === 'object') {
+    // Jika value adalah objek, coba ambil properti 'name' atau konversi ke string
+    return value.name ? String(value.name) : '...........................';
+  }
+  return String(value);
+};
+
+// Fungsi untuk menangani nilai form (khususnya untuk inisialisasi formData)
+const safeFormString = (value) => {
+  if (value == null) return '';
+  if (typeof value === 'object') {
+    // Jika value adalah objek, coba ambil properti 'name' atau kembalikan string kosong
+    return value.name ? String(value.name) : '';
+  }
+  return String(value);
+};
 
 // Template Surat
 const suratTemplates = {
@@ -841,15 +858,17 @@ export default function PermohonanSurat() {
     const fetchPermohonan = async () => {
       setLoading(true);
       try {
-        const response = await fetch(API_ENDPOINTS.SEKRETARIS.PERMOHONAN_SURAT_GET_ALL, {
+        const response = await fetch(API_ENDPOINTS.PERMOHONAN_SURAT_GET_ALL, {
           method: 'GET',
           headers: getHeaders(),
         });
         if (!response.ok) throw new Error('Gagal memuat permohonan');
         const data = await response.json();
-        setPermohonanList(data);
+        // Pastikan data.data adalah array, fallback ke [] jika tidak valid
+        setPermohonanList(Array.isArray(data.data) ? data.data : []);
       } catch (err) {
         setError('Gagal memuat data: ' + err.message);
+        setPermohonanList([]); // Fallback ke array kosong
       } finally {
         setLoading(false);
       }
@@ -874,9 +893,6 @@ export default function PermohonanSurat() {
       if (isNaN(date.getTime())) return '';
       return date.toISOString().split('T')[0];
     };
-
-    // Konversi null/undefined ke string kosong
-    const safeFormString = (value) => (value != null ? String(value) : '');
 
     const formData = {
       nama_lengkap: safeFormString(permohonan.nama_lengkap),
@@ -996,11 +1012,6 @@ export default function PermohonanSurat() {
     try {
       setLoading(true);
 
-      // // Validasi id sebelum mengirim
-      // if (isNaN(parseInt(selectedPermohonan.id, 10))) {
-      //   throw new Error('ID permohonan harus berupa angka');
-      // }
-
       const contentElement = document.createElement('div');
       contentElement.innerHTML = previewContent;
       contentElement.style.padding = '20px';
@@ -1035,7 +1046,7 @@ export default function PermohonanSurat() {
         console.log(`${pair[0]}: ${pair[1]}`);
       }
 
-      const response = await fetch(API_ENDPOINTS.SEKRETARIS.SURAT_KELUAR_ADD, {
+      const response = await fetch(API_ENDPOINTS.SURAT_KELUAR_ADD, {
         method: 'POST',
         body: formDataToSend,
       });
@@ -1066,7 +1077,7 @@ export default function PermohonanSurat() {
 
       // Perbarui status permohonan
       const updateStatusResponse = await fetch(
-        API_ENDPOINTS.SEKRETARIS.PERMOHONAN_SURAT_UPDATE_STATUS(selectedPermohonan.id),
+        API_ENDPOINTS.PERMOHONAN_SURAT_UPDATE_STATUS(selectedPermohonan.id),
         {
           method: 'PATCH',
           headers: {
