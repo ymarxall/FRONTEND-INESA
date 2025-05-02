@@ -30,6 +30,9 @@ export const pemasukanService = {
             formData.append('kategori', data.kategori.trim());
             formData.append('keterangan', data.keterangan.trim());
             if (data.nota) {
+                if (!(data.nota instanceof File)) {
+                    throw new Error('Nota harus berupa file yang valid');
+                }
                 formData.append('nota', data.nota);
             }
 
@@ -38,8 +41,12 @@ export const pemasukanService = {
                 nominal: formData.get('nominal'),
                 kategori: formData.get('kategori'),
                 keterangan: formData.get('keterangan'),
-                nota: formData.get('nota') ? 'File attached' : 'No file'
-            }); // Debugging
+                nota: formData.get('nota') ? {
+                    name: data.nota.name,
+                    size: data.nota.size,
+                    type: data.nota.type
+                } : 'No file'
+            }); // Enhanced debugging
 
             const response = await fetch('/api/pemasukan/add', {
                 method: 'POST',
@@ -81,6 +88,9 @@ export const pemasukanService = {
             formData.append('kategori', data.kategori.trim());
             formData.append('keterangan', data.keterangan.trim());
             if (data.nota) {
+                if (!(data.nota instanceof File)) {
+                    throw new Error('Nota harus berupa file yang valid');
+                }
                 formData.append('nota', data.nota);
             }
 
@@ -89,8 +99,12 @@ export const pemasukanService = {
                 nominal: formData.get('nominal'),
                 kategori: formData.get('kategori'),
                 keterangan: formData.get('keterangan'),
-                nota: formData.get('nota') ? 'File attached' : 'No file'
-            }); // Debugging
+                nota: formData.get('nota') ? {
+                    name: data.nota.name,
+                    size: data.nota.size,
+                    type: data.nota.type
+                } : 'No file'
+            }); // Enhanced debugging
 
             const response = await fetch(`/api/pemasukan/update/${id}`, {
                 method: 'PUT',
@@ -102,6 +116,7 @@ export const pemasukanService = {
             });
 
             const result = await response.json();
+            console.log('Update response:', result); // Log response for debugging
 
             if (!response.ok) {
                 throw new Error(result.message || 'Gagal mengupdate pemasukan');
@@ -137,12 +152,30 @@ export const pemasukanService = {
                 credentials: 'include'
             });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Gagal menghapus pemasukan');
+            // Log response for debugging
+            console.log('Delete response status:', response.status);
+            console.log('Delete response headers:', Object.fromEntries(response.headers));
+
+            // Handle 204 No Content or successful responses
+            if (response.status === 204) {
+                return {
+                    success: true,
+                    message: 'Pemasukan berhasil dihapus'
+                };
             }
 
-            return await response.json();
+            const result = await response.json();
+            console.log('Delete response body:', result);
+
+            if (!response.ok) {
+                throw new Error(result.message || 'Gagal menghapus pemasukan');
+            }
+
+            return {
+                success: true,
+                data: result.data,
+                message: result.message || 'Pemasukan berhasil dihapus'
+            };
         } catch (error) {
             console.error('Error in deletePemasukan:', error);
             throw error;

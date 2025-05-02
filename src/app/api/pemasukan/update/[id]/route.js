@@ -9,27 +9,19 @@ const CORS_HEADERS = {
 
 export async function PUT(request, { params }) {
   try {
-    // 1. Validate Content-Type
-    const contentType = request.headers.get('Content-Type');
-    if (contentType !== 'application/json') {
-      return NextResponse.json(
-        { success: false, message: 'Content-Type must be application/json' },
-        { status: 415, headers: CORS_HEADERS }
-      );
-    }
+    // 1. Parse FormData
+    const formData = await request.formData();
+    const { id } = params;
 
-    // 2. Parse JSON
-    let data;
-    try {
-      data = await request.json();
-    } catch (error) {
+    // 2. Validate ID
+    if (!id) {
       return NextResponse.json(
-        { success: false, message: 'Invalid JSON format' },
+        { success: false, message: 'ID tidak valid' },
         { status: 400, headers: CORS_HEADERS }
       );
     }
 
-    // // 3. Validate Authorization
+    // 3. Validate Authorization (optional, commented out to match pengeluaran)
     // const token = request.headers.get('Authorization');
     // if (!token || !token.startsWith('Bearer ')) {
     //   return NextResponse.json(
@@ -38,17 +30,15 @@ export async function PUT(request, { params }) {
     //   );
     // }
 
-    const { id } = params;
-    if (!id) {
-      return NextResponse.json(
-        { success: false, message: 'ID is required' },
-        { status: 400, headers: CORS_HEADERS }
-      );
-    }
+    // 4. Extract and validate required fields
+    const tanggal = formData.get('tanggal');
+    const nominal = formData.get('nominal');
+    const kategori = formData.get('kategori');
+    const keterangan = formData.get('keterangan');
+    const nota = formData.get('nota');
 
-    // 4. Validate required fields
     const requiredFields = ['tanggal', 'nominal', 'kategori', 'keterangan'];
-    const missingFields = requiredFields.filter(field => !data[field]);
+    const missingFields = requiredFields.filter(field => !formData.get(field));
     if (missingFields.length > 0) {
       return NextResponse.json(
         {
@@ -62,7 +52,7 @@ export async function PUT(request, { params }) {
 
     // 5. Validate date format (YYYY-MM-DD HH:mm)
     const dateRegex = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/;
-    if (!dateRegex.test(data.tanggal)) {
+    if (!dateRegex.test(tanggal)) {
       return NextResponse.json(
         { success: false, message: 'Date format must be YYYY-MM-DD HH:mm' },
         { status: 400, headers: CORS_HEADERS }
@@ -70,92 +60,103 @@ export async function PUT(request, { params }) {
     }
 
     // 6. Validate nominal
-    const nominal = Number(data.nominal.toString().replace(/\D/g, ''));
-    if (isNaN(nominal) || nominal <= 0) {
+    const nominalValue = Number(nominal);
+    if (isNaN(nominalValue) || nominalValue <= 0) {
       return NextResponse.json(
         { success: false, message: 'Nominal must be a positive number' },
         { status: 400, headers: CORS_HEADERS }
       );
     }
 
-    // 7. Validate string fields
-    if (!data.kategori.trim() || !data.keterangan.trim()) {
+    // 7. Validate kategori and keterangan
+    if (!kategori.trim() || !keterangan.trim()) {
       return NextResponse.json(
-        { success: false, message: 'Category and description cannot be empty' },
+        { success: false, message: 'Kategori and keterangan cannot be empty' },
         { status: 400, headers: CORS_HEADERS }
       );
     }
 
-    // 8. Prepare payload for backend
-    const payload = {
-      tanggal: data.tanggal, // Already in correct format "YYYY-MM-DD HH:mm"
-      nominal: nominal,
-      kategori: data.kategori.trim(),
-      keterangan: data.keterangan.trim()
-    };
+    // 8. Validate nota (if provided)
+    if (nota) {
+      if (!(nota instanceof File)) {
+        return NextResponse.json(
+          { success: false, message: 'Nota harus berupa file yang valid' },
+          { status: 400, headers: CORS_HEADERS }
+        );
+      }
+      // Validate file type
+      const allowedFileTypes = ['image/png', 'image/jpeg', 'application/pdf'];
+      if (!allowedFileTypes.includes(nota.type)) {
+        return NextResponse.json(
+          { success: false, message: 'Nota harus berupa file PNG, JPEG, atau PDF' },
+          { status: 400, headers: CORS_HEADERS }
+        );
+      }
+      // Validate file size (max 5MB)
+      if (nota.size > 5 * 1024 * 1024) {
+        return NextResponse.json(
+          { success: false, message: 'Ukuran nota tidak boleh melebihi 5MB' },
+          { status: 400, headers: CORS_HEADERS }
+        );
+      }
+      console.log('Received nota:', {
+        name: nota.name,
+        size: nota.size,
+        type: nota.type
+      }); // Log nota details
+    }
 
-    // 9. Forward to backend API
-    const backendResponse = await fetch(`${API_ENDPOINTS.BENDAHARA.PEMASUKAN_UPDATE(id)}`, {
+    // 9. Prepare FormData for backend
+    const backendFormData = new FormData();
+    backendFormData.append('tanggal', tanggal);
+    backendFormData.append('nominal', nominalValue);
+    backendFormData.append('kategori', kategori.trim());
+    backendFormData.append('keterangan', keterangan.trim());
+    if (nota) {
+      backendFormData.append('nota', nota);
+    }
+
+    // 10. Forward to backend API
+    const response = await fetch(`${API_ENDPOINTS.BENDAHARA.PEMASUKAN_UPDATE(id)}`, {
       method: 'PUT',
       headers: {
         // 'Authorization': token,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
         'ngrok-skip-browser-warning': 'true'
       },
-      body: JSON.stringify(payload)
+      body: backendFormData
     });
 
-    // 10. Handle backend response
-    if (!backendResponse.ok) {
-      let errorData;
-      try {
-        errorData = await backendResponse.json();
-      } catch {
-        errorData = { message: await backendResponse.text() };
-      }
+    // 11. Handle backend response
+    const responseData = await response.json();
+    console.log('Backend response:', responseData); // Log backend response
 
-      console.error('Backend error:', backendResponse.status, errorData);
-
+    if (!response.ok) {
       return NextResponse.json(
         {
           success: false,
-          message: errorData.message || 'Failed to update pemasukan',
-          backendError: errorData
+          message: responseData.message || 'Gagal mengupdate pemasukan'
         },
-        {
-          status: backendResponse.status,
-          headers: CORS_HEADERS
-        }
+        { status: response.status, headers: CORS_HEADERS }
       );
     }
 
-    // 11. Return success response
-    const result = await backendResponse.json();
     return NextResponse.json(
       {
         success: true,
-        message: 'Pemasukan updated successfully',
-        data: result.data || result
+        message: 'Berhasil mengupdate pemasukan',
+        data: responseData.data
       },
-      {
-        status: 200,
-        headers: CORS_HEADERS
-      }
+      { status: 200, headers: CORS_HEADERS }
     );
-
   } catch (error) {
-    console.error('Server error:', error);
+    console.error('Error updating pemasukan:', error);
     return NextResponse.json(
       {
         success: false,
-        message: 'Internal server error',
+        message: 'Terjadi kesalahan saat mengupdate pemasukan',
         error: process.env.NODE_ENV === 'development' ? error.message : undefined
       },
-      {
-        status: 500,
-        headers: CORS_HEADERS
-      }
+      { status: 500, headers: CORS_HEADERS }
     );
   }
 }
