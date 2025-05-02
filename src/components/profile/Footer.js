@@ -30,17 +30,17 @@ const Footer = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <img
                   src="/image.png"
-                  alt="Desa Kalukuang Logo"
+                  alt="Desa Bontomanai Logo"
                   style={{ width: 40, height: 40, marginRight: 8 }}
                 />
                 <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                  Desa Kalukuang
+                  Desa Bontomanai
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                 <LocationOn sx={{ mr: 1, fontSize: '1.2rem' }} />
                 <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
-                  Jl. Raya Kalukuang, Kec. Bontomanai
+                Jl. Pendidikan, Desa Bontomannai, Kec. Rumbia, Kab. Jeneponto, Sulawesi Selatan
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -52,7 +52,7 @@ const Footer = () => {
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <Email sx={{ mr: 1, fontSize: '1.2rem' }} />
                 <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
-                  desakalukuang@example.com
+                  desabontomanai@example.com
                 </Typography>
               </Box>
             </motion.div>
@@ -157,7 +157,7 @@ const Footer = () => {
         {/* Bagian Bawah: Copyright */}
         <Box sx={{ borderTop: '1px solid rgba(255, 255, 255, 0.2)', mt: 3, pt: 2, textAlign: 'center' }}>
           <Typography variant="body2" sx={{ opacity: 0.8, fontSize: '0.75rem' }}>
-            © 2025 Desa Kalukuang. All Rights Reserved.
+            © 2025 COCONUT. All Rights Reserved.
           </Typography>
         </Box>
       </Container>

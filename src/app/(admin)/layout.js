@@ -37,8 +37,8 @@ const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/admin/dashboard' },
   { text: 'Manajemen Pengguna', icon: <PeopleIcon />, path: '/admin/manajemen-pengguna' },
   { text: 'Data Pegawai', icon: <PeopleIcon />, path: '/admin/data-pegawai' },
-  { text: 'Data Penduduk', icon: <ReceiptIcon />, path: '/admin/data-penduduk' },
-  { text: 'Kelola Konten', icon: <ContentCopyIcon />, path: '/admin/kelola-konten' }
+  { text: 'Data Penduduk', icon: <ReceiptIcon />, path: '/admin/data-penduduk' }
+  // { text: 'Kelola Konten', icon: <ContentCopyIcon />, path: '/admin/kelola-konten' }
 ];
 
 export default function AdminLayout({ children }) {

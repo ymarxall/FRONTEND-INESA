@@ -11,6 +11,7 @@ import FeatureCard from "@/components/profile/FeatureCard"
 import Gallery from "@/components/profile/Gallery"
 import StrukturDesaCard from "@/components/profile/StrukturDesa"
 import StatistikPenduduk from "@/components/profile/JumlahPenduduk"
+import Footer from "@/components/profile/Footer"
 
 import { createTheme, responsiveFontSizes, ThemeProvider } from "@mui/material"
 
@@ -37,6 +38,7 @@ export default function Desa() {
                 <StatistikPenduduk />
                 <FAQSuratDesa />
                 <Location />
+                <Footer />
             </div>
         </ThemeProvider>
     )

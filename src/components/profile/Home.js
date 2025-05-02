@@ -752,7 +752,7 @@ const Home = () => {
                     1000,
                     'Selamat Datang di Website Profil Desa ',
                     1000,
-                    'Selamat Datang di Website Profil Desa Kalukuang',
+                    'Selamat Datang di Website Profil Desa Bontomanai',
                     2000,
                   ]}
                   wrapper="span"

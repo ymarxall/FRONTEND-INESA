@@ -48,7 +48,7 @@ const Location = () => {
           mx: 'auto',
           mb: 6
         }}>
-          Jika Anda memiliki pertanyaan, saran, atau ingin mengetahui lebih lanjut tentang Desa Kalukuang,
+          Jika Anda memiliki pertanyaan, saran, atau ingin mengetahui lebih lanjut tentang Desa Bontomanai,
           silakan hubungi kami melalui informasi di bawah ini.
         </Typography>
 
@@ -62,14 +62,14 @@ const Location = () => {
             <Box sx={{ mb: 4, boxShadow: 2, padding: 2, borderRadius: 1 }}>
               <ContactInfoItem>
                 <LocationIcon />
-                <Typography>Jl. Raya Kalukuang No. 12, Kecamatan Tallo, Indonesia</Typography>
+                <Typography>Jl. Pendidikan, Desa Bontomannai, Kec. Rumbia, Kab. Jeneponto, Sulawesi Selatan</Typography>
               </ContactInfoItem>
 
               <ContactInfoItem>
                 <EmailIcon />
                 <Typography>
-                  <Link href="mailto:kontak@desakalukuang.go.id" color="inherit">
-                    kontak@desakalukuang.go.id
+                  <Link href="mailto:kontak@desabontomanai.go.id" color="inherit">
+                    kontak@desabontomanai.go.id
                   </Link>
                 </Typography>
               </ContactInfoItem>
@@ -132,16 +132,8 @@ const Location = () => {
             <Divider sx={{ mb: 3 }} />
 
             <Box sx={{ mb: 3, borderRadius: 1, boxShadow: 2, padding: 2 }}>
-              <Typography variant="h4" gutterBottom>Kalukuang</Typography>
-              <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3953.265347820274!2d111.4418143153266!3d-7.759467794406858!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e79980a7e5f9c3f%3A0x1e2c1b5b5b5b5b5b!2sNgawi%2C%20Ngawi%20Regency%2C%20East%20Java!5e0!3m2!1sen!2sid!4v1620000000000!5m2!1sen!2sid"
-                width="100%"
-                height="500"
-                style={{ border: 1 }}
-                allowFullScreen=""
-                loading="lazy"
-              ></iframe>
-
+              <Typography variant="h4" gutterBottom>Bontomanai</Typography>
+          <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d960.4794164864701!2d119.85046174130524!3d-5.501687762084736!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2dbeb51821cd97fb%3A0x2409452f58fb86e0!2sKantor%20desa%20rumbia!5e0!3m2!1sid!2sid!4v1746189286748!5m2!1sid!2sid" width="100%" height="500" style={{border:0}} loading="lazy" ></iframe>
             </Box>
 
           </Grid>

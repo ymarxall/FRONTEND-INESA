@@ -22,7 +22,7 @@ const Gallery = () => {
         {
             img: '/gallery/gbr-1.jpg',
             title: 'Panen Raya Desa',
-            description: 'Kegiatan panen tahunan warga Desa Kalukuang'
+            description: 'Kegiatan panen tahunan warga Desa Bontomanai'
         },
         {
             img: '/gallery/gbr-2.jpg',

@@ -18,7 +18,7 @@ const FormContainer = styled(Box)(({ theme }) => ({
   alignItems: 'center',
   justifyContent: 'center',
   minHeight: '100vh',
-  background: 'linear-gradient(135deg, #1a237e 0%, #0d47a1 100%)',
+  background: 'linear-gradient(135deg, #1a237e 0%, #ffffff 100%)',
   padding: '24px',
 }))
 

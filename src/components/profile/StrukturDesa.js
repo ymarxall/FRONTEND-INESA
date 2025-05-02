@@ -9,7 +9,7 @@ const strukturDesa = {
     {
       jabatan: "KEPALA DESA",
       nama: "NURLENI",
-      foto: "/pengurus/kepala-desa.jpg",
+      foto: "/pengurus/kades.png",
     },
     {
       jabatan: "SEKRETARIS",
@@ -24,12 +24,12 @@ const strukturDesa = {
     {
       jabatan: "KASI PEMERINTAHAN",
       nama: "MUHAMMAD SAKIR",
-      foto: "/pengurus/kasi-pemerintahan.jpg",
+      foto: "/pengurus/kasi.jpg",
     },
     {
       jabatan: "KASI PEMBANGUNAN",
       nama: "HADALIA DG. CAYA",
-      foto: "/pengurus/kasi-pembangunan.jpg",
+      foto: "/pengurus/kasi2.jpg",
     },
   ],
 };

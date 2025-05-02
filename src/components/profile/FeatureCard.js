@@ -59,7 +59,7 @@ const FeatureCard = () => {
     <Box className="page-background">
       <Container maxWidth="lg" sx={{ py: 8 }}>
         <Typography variant="h4" component="h2" gutterBottom align="center" sx={{ fontWeight: 'bold', mb: 6, color: 'text.primary' }}>
-          Pelayanan Desa Kalukuang
+          Pelayanan Desa Bontomanai
         </Typography>
         <Grid container spacing={4}>
           {services.map((service, index) => (
