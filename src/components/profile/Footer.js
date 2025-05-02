@@ -40,7 +40,7 @@ const Footer = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                 <LocationOn sx={{ mr: 1, fontSize: '1.2rem' }} />
                 <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
-                Jl. Pendidikan, Desa Bontomannai, Kec. Rumbia, Kab. Jeneponto, Sulawesi Selatan
+                Jl. Pendidikan, Desa Bontomanai, Kec. Rumbia, Kab. Jeneponto, Sulawesi Selatan
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>

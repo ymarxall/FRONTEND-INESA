@@ -27,31 +27,49 @@ import { Description as DescriptionIcon, Send as SendIcon, Close as CloseIcon } 
 import './styles.css';
 import { API_ENDPOINTS, getHeaders } from '@/config/api';
 
-
 const Notification = ({ pesan, tipe, onTutup }) => {
   useEffect(() => {
     const timer = setTimeout(onTutup, 3000);
     return () => clearTimeout(timer);
   }, [onTutup]);
 
-  const bgColor = {
-    sukses: 'bg-green-500',
-    error: 'bg-red-500',
-    peringatan: 'bg-yellow-500',
-  }[tipe];
+  const getBackgroundColor = () => {
+    switch (tipe) {
+      case 'sukses': return '#10b981'; // Hijau sukses
+      case 'error': return '#ef4444'; // Merah error
+      case 'peringatan': return '#f59e0b'; // Kuning peringatan
+      default: return '#10b981';
+    }
+  };
 
   return (
     <motion.div
-      className={`fixed top-4 left-0 right-0 z-50 ${bgColor} text-white py-4 px-4 flex items-center justify-between`}
+      style={{
+        position: 'absolute',
+        top: '20px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 50,
+        backgroundColor: getBackgroundColor(),
+        color: 'white',
+        padding: '12px 24px',
+        borderRadius: '8px',
+        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        maxWidth: '400px',
+        width: '90%',
+      }}
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       exit={{ y: -100, opacity: 0 }}
       transition={{ type: 'spring', stiffness: 120 }}
       role="alert"
     >
-      <Typography className="text-sm">{pesan}</Typography>
-      <IconButton onClick={onTutup} className="text-white hover:text-gray-200">
-        <CloseIcon />
+      <Typography variant="body1" fontWeight="medium">{pesan}</Typography>
+      <IconButton onClick={onTutup} sx={{ color: 'white', '&:hover': { color: '#d1d5db' } }}>
+        <CloseIcon fontSize="medium" />
       </IconButton>
     </motion.div>
   );
@@ -587,7 +605,7 @@ const Home = () => {
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth margin="normal">
                 <TextField
-                  label="Nama Ibu"
+                  label61="Nama Ibu"
                   name="nama_ibu"
                   value={formData.nama_ibu}
                   onChange={handleInputChange}
@@ -789,16 +807,6 @@ const Home = () => {
         </Box>
       </Container>
 
-      <AnimatePresence>
-        {notifikasi && (
-          <Notification
-            pesan={notifikasi.pesan}
-            tipe={notifikasi.tipe}
-            onTutup={() => setNotifikasi(null)}
-          />
-        )}
-      </AnimatePresence>
-
       <Dialog
         open={openDialog}
         onClose={handleCloseDialog}
@@ -817,7 +825,16 @@ const Home = () => {
             <CloseIcon fontSize="small" />
           </IconButton>
         </DialogTitle>
-        <DialogContent sx={{ bgcolor: 'background.paper', pt: 3, pb: 3 }}>
+        <DialogContent sx={{ bgcolor: 'background.paper', pt: 3, pb: 3, position: 'relative' }}>
+          <AnimatePresence>
+            {notifikasi && (
+              <Notification
+                pesan={notifikasi.pesan}
+                tipe={notifikasi.tipe}
+                onTutup={() => setNotifikasi(null)}
+              />
+            )}
+          </AnimatePresence>
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}

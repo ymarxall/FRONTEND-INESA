@@ -51,6 +51,7 @@ const Navbar = () => {
 
   const handleLogin = () => {
     router.push('/authentication/sign-in');
+    handleCloseNavMenu();
   };
 
   return (
@@ -112,10 +113,16 @@ const Navbar = () => {
                     </Typography>
                   </MenuItem>
                 ))}
+                {/* Tambahkan tombol Login di menu dropdown */}
+                <MenuItem onClick={handleLogin}>
+                  <Typography textAlign="center" sx={{ fontSize: '0.875rem', color: '#333', fontWeight: 700 }}>
+                    Login
+                  </Typography>
+                </MenuItem>
               </Menu>
             </Box>
 
-            <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, justifyContent: 'flex-start', marginLeft: 8, gap: 1.5 }}>
+            <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, justifyContent: 'flex-start', marginLeft: 25, gap: 1.5 }}>
               {pages.map((page) => (
                 <Button
                   key={page.name}

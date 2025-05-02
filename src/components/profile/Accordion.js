@@ -20,7 +20,7 @@ const faqData = [
   },
   {
     question: 'Apakah ada biaya untuk pengajuan surat?',
-    answer: 'Pengajuan surat di Desa Kalukuang tidak dikenakan biaya, kecuali untuk keperluan tertentu yang memerlukan materai atau biaya administrasi resmi.',
+    answer: 'Pengajuan surat di Desa Bontomanai tidak dikenakan biaya, kecuali untuk keperluan tertentu yang memerlukan materai atau biaya administrasi resmi.',
   },
 ];
 
