@@ -7,7 +7,7 @@ import './styles.css';
 
 const About = () => {
   return (
-    <Box className="page-background" id="about" sx={{ py: 6 }}>
+    <Box className="page-background"  sx={{ py: 6 }}>
       <Container maxWidth="lg">
         <Card sx={{ p: 3, bgcolor: 'background.card', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
           <Typography

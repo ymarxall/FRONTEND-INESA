@@ -45,14 +45,14 @@ const Notification = ({ pesan, tipe, onTutup }) => {
   return (
     <motion.div
       style={{
-        position: 'absolute',
-        top: '20px',
-        left: '50%',
+        position: 'fixed',
+        top: '16px',
+        left: '16px',
         transform: 'translateX(-50%)',
         zIndex: 50,
         backgroundColor: getBackgroundColor(),
         color: 'white',
-        padding: '12px 24px',
+        padding: '10px 20px',
         borderRadius: '8px',
         boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
         display: 'flex',
@@ -60,6 +60,8 @@ const Notification = ({ pesan, tipe, onTutup }) => {
         alignItems: 'center',
         maxWidth: '400px',
         width: '90%',
+        minWidth: '200px',
+        fontSize: '0.875rem',
       }}
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
@@ -1086,7 +1088,7 @@ const Home = () => {
                             disabled={nikTerdaftar}
                           />
                           <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                            Contoh: Jl. Raya Kalukuang No. 12, Kec. Bangkala
+                            Contoh: Jl. Pendidikan, Kec. Rumbia
                           </Typography>
                         </FormControl>
                       </Grid>

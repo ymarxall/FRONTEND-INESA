@@ -416,12 +416,7 @@ export default function Dashboard() {
                               </TextNoCursor>
                             </Box>
                           </Box>
-                          <ActionButton
-                            size="small"
-                            onClick={() => handleViewDetails(item)}
-                          >
-                            Lihat Detail
-                          </ActionButton>
+                         
                         </CardContent>
                       </StatCard>
                     </Grid>

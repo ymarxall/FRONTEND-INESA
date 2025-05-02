@@ -78,7 +78,7 @@ const Navbar = () => {
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <img
                 src="/image.png"
-                alt="Desa Kalukuang Logo"
+                alt="Desa Bontomanai Logo"
                 style={{ width: 24, height: 24, marginRight: 6 }}
               />
               <Typography
