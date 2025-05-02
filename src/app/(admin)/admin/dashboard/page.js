@@ -18,6 +18,7 @@ import AssignmentIcon from '@mui/icons-material/Assignment'
 import Breadcrumbs from '@mui/material/Breadcrumbs'
 import Link from '@mui/material/Link'
 import { API_ENDPOINTS, getHeaders } from '@/config/api'
+import { laporanService } from '@/services/laporanService'
 
 // Styled Components
 const DashboardCard = styled(Card)(({ theme }) => ({
@@ -135,26 +136,23 @@ export default function Dashboard() {
         console.error('Error fetching penduduk:', error)
       }
 
-      // Fetch data pemasukan dengan penanganan error
+      // Fetch data keuangan menggunakan laporanService seperti Dashboard Bendahara
       let pemasukanData = { total: 0 }
-      try {
-        pemasukanData = await fetchWithTimeout('https://joyful-analysis-production.up.railway.app/api/laporan/pemasukan', {
-          headers,
-          credentials: 'include',
-        })
-      } catch (error) {
-        console.error('Error fetching pemasukan:', error)
-      }
-
-      // Fetch data pengeluaran dengan penanganan error
       let pengeluaranData = { total: 0 }
       try {
-        pengeluaranData = await fetchWithTimeout('https://joyful-analysis-production.up.railway.app/api/laporan/pengeluaran', {
-          headers,
-          credentials: 'include',
-        })
+        const laporanData = await laporanService.getAllLaporan()
+        if (laporanData && laporanData.length > 0) {
+          // Hitung total pemasukan dan pengeluaran seperti di Dashboard Bendahara
+          const pemasukan = laporanData.reduce((sum, item) => sum + (item.pemasukan || 0), 0)
+          const pengeluaran = laporanData.reduce((sum, item) => sum + (item.pengeluaran || 0), 0)
+
+          pemasukanData = { total: pemasukan }
+          pengeluaranData = { total: pengeluaran }
+        } else {
+          console.warn('Data laporan keuangan tidak tersedia')
+        }
       } catch (error) {
-        console.error('Error fetching pengeluaran:', error)
+        console.error('Error fetching laporan keuangan:', error)
       }
 
       // Fetch data surat masuk menggunakan API_ENDPOINTS seperti Dashboard Sekretaris
