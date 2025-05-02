@@ -72,7 +72,7 @@ export default function ManajemenPengguna() {
 
       setLoading(true)
       console.log('[FETCH] Mengambil data pengguna dengan token:', token)
-      const res = await fetch('http://localhost:8080/api/users', {
+      const res = await fetch('http://192.168.1.85:8080/api/users', {
         headers: { Authorization: `Bearer ${token}` }
       })
 
@@ -127,7 +127,7 @@ export default function ManajemenPengguna() {
 
       setLoading(true)
       console.log('[DELETE] Menghapus pengguna dengan ID:', id)
-      const res = await fetch(`http://localhost:8080/api/deleteusers/${id}`, {
+      const res = await fetch(`http://192.168.1.85:8080/api/deleteusers/${id}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
