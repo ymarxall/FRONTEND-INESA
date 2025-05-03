@@ -35,9 +35,9 @@ const Notification = ({ pesan, tipe, onTutup }) => {
 
   const getBackgroundColor = () => {
     switch (tipe) {
-      case 'sukses': return '#10b981'; // Hijau sukses
-      case 'error': return '#ef4444'; // Merah error
-      case 'peringatan': return '#f59e0b'; // Kuning peringatan
+      case 'sukses': return '#10b981';
+      case 'error': return '#ef4444';
+      case 'peringatan': return '#f59e0b';
       default: return '#10b981';
     }
   };
@@ -77,6 +77,112 @@ const Notification = ({ pesan, tipe, onTutup }) => {
   );
 };
 
+const letterFields = {
+  'Surat Keterangan Tidak Mampu': [
+    { name: 'nik', label: 'NIK', type: 'text', placeholder: 'Masukkan NIK', disabled: true, required: true },
+    { name: 'nama_lengkap', label: 'Nama Lengkap', type: 'text', placeholder: 'Masukkan Nama Lengkap', disabled: true, required: true },
+    { name: 'tempat_lahir', label: 'Tempat Lahir', type: 'text', placeholder: 'Masukkan Tempat Lahir', disabled: true, required: true },
+    { name: 'tanggal_lahir', label: 'Tanggal Lahir', type: 'date', placeholder: 'Pilih Tanggal Lahir', disabled: true, required: true },
+    { name: 'pekerjaan', label: 'Pekerjaan', type: 'text', placeholder: 'Masukkan Pekerjaan', required: true },
+    { name: 'alamat_lengkap', label: 'Alamat Lengkap', type: 'text', placeholder: 'Masukkan Alamat Lengkap', disabled: true, required: true, multiline: true, rows: 2 },
+    { name: 'keperluan', label: 'Keperluan', type: 'text', placeholder: 'Masukkan Keperluan', required: true },
+    { name: 'nomor_hp', label: 'Nomor HP', type: 'text', placeholder: 'Masukkan Nomor HP', required: true },
+    { name: 'keterangan', label: 'Keterangan', type: 'text', placeholder: 'Masukkan Keterangan', required: true },
+  ],
+  'Surat Keterangan Usaha': [
+    { name: 'nik', label: 'NIK', type: 'text', placeholder: 'Masukkan NIK', disabled: true, required: true },
+    { name: 'nama_lengkap', label: 'Nama Lengkap', type: 'text', placeholder: 'Masukkan Nama Lengkap', disabled: true, required: true },
+    { name: 'tempat_lahir', label: 'Tempat Lahir', type: 'text', placeholder: 'Masukkan Tempat Lahir', disabled: true, required: true },
+    { name: 'tanggal_lahir', label: 'Tanggal Lahir', type: 'date', placeholder: 'Pilih Tanggal Lahir', disabled: true, required: true },
+    { name: 'alamat_lengkap', label: 'Alamat Lengkap', type: 'text', placeholder: 'Masukkan Alamat Lengkap', disabled: true, required: true, multiline: true, rows: 2 },
+    { name: 'nama_usaha', label: 'Nama Usaha', type: 'text', placeholder: 'Masukkan Nama Usaha', required: true },
+    { name: 'jenis_usaha', label: 'Jenis Usaha', type: 'select', placeholder: 'Pilih Jenis Usaha', required: true, options: [
+      { value: '', label: 'Pilih jenis usaha' },
+      { value: 'Perdagangan', label: 'Perdagangan' },
+      { value: 'Jasa', label: 'Jasa' },
+      { value: 'Kuliner', label: 'Kuliner' },
+      { value: 'Manufaktur', label: 'Manufaktur' },
+      { value: 'Pertanian', label: 'Pertanian' },
+      { value: 'Lainnya', label: 'Lainnya' },
+    ]},
+    { name: 'alamat_usaha', label: 'Alamat Usaha', type: 'text', placeholder: 'Masukkan Alamat Usaha', required: true, multiline: true, rows: 2 },
+    { name: 'nomor_hp', label: 'Nomor HP', type: 'text', placeholder: 'Masukkan Nomor HP', required: true },
+    { name: 'keterangan', label: 'Keterangan', type: 'text', placeholder: 'Masukkan Keterangan', required: true },
+  ],
+  'Surat Keterangan Domisili': [
+    { name: 'nik', label: 'NIK', type: 'text', placeholder: 'Masukkan NIK', disabled: true, required: true },
+    { name: 'nama_lengkap', label: 'Nama Lengkap', type: 'text', placeholder: 'Masukkan Nama Lengkap', disabled: true, required: true },
+    { name: 'tempat_lahir', label: 'Tempat Lahir', type: 'text', placeholder: 'Masukkan Tempat Lahir', disabled: true, required: true },
+    { name: 'tanggal_lahir', label: 'Tanggal Lahir', type: 'date', placeholder: 'Pilih Tanggal Lahir', disabled: true, required: true },
+    { name: 'alamat_lengkap', label: 'Alamat Lengkap', type: 'text', placeholder: 'Masukkan Alamat Lengkap', disabled: true, required: true, multiline: true, rows: 2 },
+    { name: 'status_pernikahan', label: 'Status Pernikahan', type: 'select', placeholder: 'Pilih Status Pernikahan', required: true, options: [
+      { value: '', label: 'Pilih status' },
+      { value: 'Belum Menikah', label: 'Belum Menikah' },
+      { value: 'Menikah', label: 'Menikah' },
+      { value: 'Cerai Mati', label: 'Cerai Mati' },
+      { value: 'Cerai Hidup', label: 'Cerai Hidup' },
+    ]},
+    { name: 'lama_tinggal', label: 'Lama Tinggal (bulan)', type: 'number', placeholder: 'Masukkan Lama Tinggal', required: true },
+    { name: 'nomor_hp', label: 'Nomor HP', type: 'text', placeholder: 'Masukkan Nomor HP', required: true },
+    { name: 'keterangan', label: 'Keterangan', type: 'text', placeholder: 'Masukkan Keterangan', required: true },
+  ],
+  'Surat Keterangan Pindah': [
+    { name: 'nik', label: 'NIK', type: 'text', placeholder: 'Masukkan NIK', disabled: true, required: true },
+    { name: 'nama_lengkap', label: 'Nama Lengkap', type: 'text', placeholder: 'Masukkan Nama Lengkap', disabled: true, required: true },
+    { name: 'tempat_lahir', label: 'Tempat Lahir', type: 'text', placeholder: 'Masukkan Tempat Lahir', disabled: true, required: true },
+    { name: 'tanggal_lahir', label: 'Tanggal Lahir', type: 'date', placeholder: 'Pilih Tanggal Lahir', disabled: true, required: true },
+    { name: 'alamat_lengkap', label: 'Alamat Asal', type: 'text', placeholder: 'Masukkan Alamat Asal', disabled: true, required: true, multiline: true, rows: 2 },
+    { name: 'alamat_tujuan', label: 'Alamat Tujuan', type: 'text', placeholder: 'Masukkan Alamat Tujuan', required: true, multiline: true, rows: 2 },
+    { name: 'alasan_pindah', label: 'Alasan Pindah', type: 'select', placeholder: 'Pilih Alasan Pindah', required: true, options: [
+      { value: '', label: 'Pilih alasan pindah' },
+      { value: 'Pekerjaan', label: 'Pekerjaan' },
+      { value: 'Pendidikan', label: 'Pendidikan' },
+      { value: 'Keluarga', label: 'Keluarga' },
+      { value: 'Kesehatan', label: 'Kesehatan' },
+      { value: 'Lainnya', label: 'Lainnya' },
+    ]},
+    { name: 'keperluan', label: 'Keperluan', type: 'text', placeholder: 'Masukkan Keperluan', required: true },
+    { name: 'nomor_hp', label: 'Nomor HP', type: 'text', placeholder: 'Masukkan Nomor HP', required: true },
+    { name: 'keterangan', label: 'Keterangan', type: 'text', placeholder: 'Masukkan Keterangan', required: true },
+  ],
+  'Surat Pengantar': [
+    { name: 'nik', label: 'NIK', type: 'text', placeholder: 'Masukkan NIK', disabled: true, required: true },
+    { name: 'nama_lengkap', label: 'Nama Lengkap', type: 'text', placeholder: 'Masukkan Nama Lengkap', disabled: true, required: true },
+    { name: 'tempat_lahir', label: 'Tempat Lahir', type: 'text', placeholder: 'Masukkan Tempat Lahir', disabled: true, required: true },
+    { name: 'tanggal_lahir', label: 'Tanggal Lahir', type: 'date', placeholder: 'Pilih Tanggal Lahir', disabled: true, required: true },
+    { name: 'alamat_lengkap', label: 'Alamat Lengkap', type: 'text', placeholder: 'Masukkan Alamat Lengkap', disabled: true, required: true, multiline: true, rows: 2 },
+    { name: 'keperluan', label: 'Keperluan', type: 'text', placeholder: 'Masukkan Keperluan', required: true },
+    { name: 'nomor_hp', label: 'Nomor HP', type: 'text', placeholder: 'Masukkan Nomor HP', required: true },
+    { name: 'keterangan', label: 'Keterangan', type: 'text', placeholder: 'Masukkan Keterangan', required: true },
+  ],
+  'Surat Keterangan Kelahiran': [
+    { name: 'nama_lengkap', label: 'Nama Anak', type: 'text', placeholder: 'Masukkan Nama Anak', required: true },
+    { name: 'jenis_kelamin', label: 'Jenis Kelamin', type: 'select', placeholder: 'Pilih Jenis Kelamin', required: true, options: [
+      { value: '', label: 'Pilih jenis kelamin' },
+      { value: 'Laki-laki', label: 'Laki-laki' },
+      { value: 'Perempuan', label: 'Perempuan' },
+    ]},
+    { name: 'tempat_lahir', label: 'Tempat Lahir Anak', type: 'text', placeholder: 'Masukkan Tempat Lahir', required: true },
+    { name: 'tanggal_lahir', label: 'Tanggal Lahir Anak', type: 'date', placeholder: 'Pilih Tanggal Lahir', required: true },
+    { name: 'nama_ayah', label: 'Nama Ayah', type: 'text', placeholder: 'Masukkan Nama Ayah', required: true },
+    { name: 'nama_ibu', label: 'Nama Ibu', type: 'text', placeholder: 'Masukkan Nama Ibu', required: true },
+    { name: 'alamat_lengkap', label: 'Alamat Orang Tua', type: 'text', placeholder: 'Masukkan Alamat Orang Tua', required: true, multiline: true, rows: 2 },
+    { name: 'nomor_hp', label: 'Nomor HP', type: 'text', placeholder: 'Masukkan Nomor HP', required: true },
+    { name: 'keterangan', label: 'Keterangan', type: 'text', placeholder: 'Masukkan Keterangan', required: true },
+  ],
+  'Surat Keterangan Kematian': [
+    { name: 'nik', label: 'NIK', type: 'text', placeholder: 'Masukkan NIK', disabled: true, required: true },
+    { name: 'nama_lengkap', label: 'Nama Lengkap', type: 'text', placeholder: 'Masukkan Nama Lengkap', disabled: true, required: true },
+    { name: 'tempat_lahir', label: 'Tempat Lahir', type: 'text', placeholder: 'Masukkan Tempat Lahir', disabled: true, required: true },
+    { name: 'tanggal_lahir', label: 'Tanggal Lahir', type: 'date', placeholder: 'Pilih Tanggal Lahir', disabled: true, required: true },
+    { name: 'alamat_lengkap', label: 'Alamat Lengkap', type: 'text', placeholder: 'Masukkan Alamat Lengkap', disabled: true, required: true, multiline: true, rows: 2 },
+    { name: 'tgl_kematian', label: 'Tanggal Kematian', type: 'date', placeholder: 'Pilih Tanggal Kematian', required: true },
+    { name: 'penyebab_kematian', label: 'Penyebab Kematian', type: 'text', placeholder: 'Masukkan Penyebab Kematian', required: true },
+    { name: 'nomor_hp', label: 'Nomor HP', type: 'text', placeholder: 'Masukkan Nomor HP', required: true },
+    { name: 'keterangan', label: 'Keterangan', type: 'text', placeholder: 'Masukkan Keterangan', required: true },
+  ],
+};
+
 const Home = () => {
   const initialFormData = {
     nik: '',
@@ -93,6 +199,8 @@ const Home = () => {
     penghasilan: '',
     status_pernikahan: '',
     lama_tinggal: '',
+    nomor_hp: '',
+    keterangan: '',
     nama_usaha: '',
     jenis_usaha: '',
     alamat_usaha: '',
@@ -102,10 +210,10 @@ const Home = () => {
     tujuan_pindah: '',
     nama_ayah: '',
     nama_ibu: '',
-    nomor_hp: '',
     tujuan_surat: '',
     tgl_kematian: '',
     penyebab_kematian: '',
+    keperluan: '',
   };
 
   const [openDialog, setOpenDialog] = useState(false);
@@ -130,36 +238,21 @@ const Home = () => {
 
   const validateNIK = (nik) => /^\d{16}$/.test(nik);
 
+  const validatePhoneNumber = (nomor_hp) => /^\+?[1-9]\d{9,14}$/.test(nomor_hp);
+
   const validateForm = (data) => {
     if (!data.jenis_surat) return 'Jenis surat harus dipilih';
-    if (data.jenis_surat === 'Kelahiran') {
-      const requiredFields = ['nama_ayah', 'nama_ibu', 'tujuan_surat'];
-      for (const field of requiredFields) {
-        if (!data[field]) return `Kolom ${field.replace('_', ' ')} harus diisi`;
+    const fields = letterFields[data.jenis_surat] || [];
+    for (const field of fields) {
+      if (field.required && !data[field.name]) {
+        return `Kolom ${field.label} harus diisi`;
       }
-      return null;
-    }
-    const requiredFields = [
-      'nik', 'nama_lengkap', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin',
-      'agama', 'pekerjaan', 'alamat_lengkap', 'jenis_surat'
-    ];
-    if (data.jenis_surat === 'Surat Keterangan Domisili') {
-      requiredFields.push('status_pernikahan', 'lama_tinggal');
-    } else if (data.jenis_surat === 'SKTM') {
-      requiredFields.push('penghasilan');
-    } else if (data.jenis_surat === 'Usaha') {
-      requiredFields.push('nama_usaha', 'jenis_usaha', 'alamat_usaha');
-    } else if (data.jenis_surat === 'Pindah') {
-      requiredFields.push('alamat_tujuan', 'alasan_pindah', 'keperluan_pindah', 'tujuan_pindah');
-    } else if (data.jenis_surat === 'Kematian') {
-      requiredFields.push('tgl_kematian', 'penyebab_kematian', 'tujuan_surat');
-    }
-    for (const field of requiredFields) {
-      if (!data[field]) return `Kolom ${field.replace('_', ' ')} harus diisi`;
     }
     if (data.nik && !validateNIK(data.nik)) return 'NIK harus 16 digit angka';
     if (data.lama_tinggal && Number(data.lama_tinggal) < 6) return 'Lama tinggal minimal 6 bulan';
-    if (data.penghasilan && Number(data.penghasilan) < 0) return 'Penghasilan tidak boleh negatif';
+    if (data.nomor_hp && !validatePhoneNumber(data.nomor_hp)) {
+      return 'Nomor HP tidak valid (contoh: +6281234567890)';
+    }
     if (data.tanggal_lahir) {
       const today = new Date();
       const birthDate = new Date(data.tanggal_lahir);
@@ -223,6 +316,8 @@ const Home = () => {
         penghasilan: result.penghasilan ? String(result.penghasilan) : prev.penghasilan,
         lama_tinggal: result.lama_tinggal ? String(result.lama_tinggal) : prev.lama_tinggal,
         status_pernikahan: result.status_pernikahan || prev.status_pernikahan,
+        nomor_hp: result.nomor_hp || prev.nomor_hp,
+        keterangan: result.keterangan || prev.keterangan,
         nama_usaha: result.nama_usaha || prev.nama_usaha,
         jenis_usaha: result.jenis_usaha || prev.jenis_usaha,
         alamat_usaha: result.alamat_usaha || prev.alamat_usaha,
@@ -232,10 +327,10 @@ const Home = () => {
         tujuan_pindah: result.tujuan_pindah || prev.tujuan_pindah,
         nama_ayah: result.nama_ayah || prev.nama_ayah,
         nama_ibu: result.nama_ibu || prev.nama_ibu,
-        nomor_hp: result.nomor_hp || prev.nomor_hp,
         tujuan_surat: result.tujuan_surat || prev.tujuan_surat,
         tgl_kematian: result.tanggal_kematian || prev.tgl_kematian,
         penyebab_kematian: result.penyebab_kematian || prev.penyebab_kematian,
+        keperluan: result.keperluan || prev.keperluan,
       }));
       setNikTerdaftar(true);
       setNotifikasi({
@@ -254,14 +349,19 @@ const Home = () => {
   };
 
   useEffect(() => {
-    if (formData.jenis_surat === 'Kelahiran') {
+    if (formData.jenis_surat === 'Surat Keterangan Kelahiran') {
       setFormData((prev) => ({
         ...initialFormData,
         jenis_surat: prev.jenis_surat,
+        nama_lengkap: prev.nama_lengkap,
+        jenis_kelamin: prev.jenis_kelamin,
+        tempat_lahir: prev.tempat_lahir,
+        tanggal_lahir: prev.tanggal_lahir,
         nama_ayah: prev.nama_ayah,
         nama_ibu: prev.nama_ibu,
+        alamat_lengkap: prev.alamat_lengkap,
         nomor_hp: prev.nomor_hp,
-        tujuan_surat: prev.tujuan_surat,
+        keterangan: prev.keterangan,
       }));
       setNikTerdaftar(undefined);
       return;
@@ -283,20 +383,22 @@ const Home = () => {
         throw new Error(validationError);
       }
       const dataToSend = {
-        nik: formData.jenis_surat === 'Kelahiran' ? undefined : formData.nik,
-        nama_lengkap: formData.jenis_surat === 'Kelahiran' ? undefined : formData.nama_lengkap,
-        tempat_lahir: formData.jenis_surat === 'Kelahiran' ? undefined : formData.tempat_lahir,
-        tanggal_lahir: formData.jenis_surat === 'Kelahiran' ? undefined : formData.tanggal_lahir,
-        jenis_kelamin: formData.jenis_surat === 'Kelahiran' ? undefined : formData.jenis_kelamin,
-        agama: formData.jenis_surat === 'Kelahiran' ? undefined : formData.agama,
-        pekerjaan: formData.jenis_surat === 'Kelahiran' ? undefined : formData.pekerjaan,
-        alamat_lengkap: formData.jenis_surat === 'Kelahiran' ? undefined : formData.alamat_lengkap,
-        pendidikan: formData.jenis_surat === 'Kelahiran' ? undefined : formData.pendidikan,
-        kewarganegaraan: formData.jenis_surat === 'Kelahiran' ? undefined : formData.kewarganegaraan,
+        nik: formData.jenis_surat === 'Surat Keterangan Kelahiran' ? undefined : formData.nik,
+        nama_lengkap: formData.nama_lengkap || undefined,
+        tempat_lahir: formData.tempat_lahir || undefined,
+        tanggal_lahir: formData.tanggal_lahir || undefined,
+        jenis_kelamin: formData.jenis_kelamin || undefined,
+        agama: formData.agama || undefined,
+        pekerjaan: formData.pekerjaan || undefined,
+        alamat_lengkap: formData.alamat_lengkap || undefined,
+        pendidikan: formData.pendidikan || undefined,
+        kewarganegaraan: formData.kewarganegaraan || undefined,
         jenis_surat: formData.jenis_surat,
         penghasilan: formData.penghasilan || undefined,
         status_pernikahan: formData.status_pernikahan || undefined,
         lama_tinggal: formData.lama_tinggal || undefined,
+        nomor_hp: formData.nomor_hp || undefined,
+        keterangan: formData.keterangan || undefined,
         nama_usaha: formData.nama_usaha || undefined,
         jenis_usaha: formData.jenis_usaha || undefined,
         alamat_usaha: formData.alamat_usaha || undefined,
@@ -306,10 +408,10 @@ const Home = () => {
         tujuan_pindah: formData.tujuan_pindah || undefined,
         nama_ayah: formData.nama_ayah || undefined,
         nama_ibu: formData.nama_ibu || undefined,
-        nomor_hp: formData.nomor_hp || undefined,
         tujuan_surat: formData.tujuan_surat || undefined,
         tanggal_kematian: formData.tgl_kematian || undefined,
         penyebab_kematian: formData.penyebab_kematian || undefined,
+        keperluan: formData.keperluan || undefined,
       };
       const response = await fetch(API_ENDPOINTS.SEKRETARIS.PERMOHONAN_SURAT_ADD, {
         method: 'POST',
@@ -343,7 +445,7 @@ const Home = () => {
       });
       setFormData({
         ...initialFormData,
-        nik: formData.jenis_surat === 'Kelahiran' ? '' : formData.nik,
+        nik: formData.jenis_surat === 'Surat Keterangan Kelahiran' ? '' : formData.nik,
       });
       setNikTerdaftar(undefined);
       handleCloseDialog();
@@ -358,390 +460,61 @@ const Home = () => {
   };
 
   const renderAdditionalFields = () => {
-    switch (formData.jenis_surat) {
-      case 'SKTM':
-        return (
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth margin="normal">
-              <TextField
-                label="Penghasilan Per Bulan (Rp)"
-                name="penghasilan"
-                type="number"
-                value={formData.penghasilan}
+    const fields = letterFields[formData.jenis_surat] || [];
+    return fields.map((field, index) => (
+      <Grid item xs={12} sm={field.multiline ? 12 : 6} key={index}>
+        <FormControl fullWidth margin="normal">
+          {field.type === 'select' ? (
+            <>
+              <InputLabel sx={{ fontSize: '0.875rem' }}>{field.label}</InputLabel>
+              <Select
+                name={field.name}
+                value={formData[field.name] || ''}
                 onChange={handleInputChange}
-                required
-                variant="outlined"
+                label={field.label}
+                required={field.required}
                 size="small"
-                InputLabelProps={{ style: { fontSize: '0.875rem' } }}
-                InputProps={{ style: { fontSize: '0.875rem' } }}
-                inputProps={{ min: 0 }}
-              />
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                Contoh: 1000000
-              </Typography>
-            </FormControl>
-          </Grid>
-        );
-      case 'Surat Keterangan Domisili':
-        return (
-          <>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth margin="normal">
-                <InputLabel sx={{ fontSize: '0.875rem' }}>Status Pernikahan</InputLabel>
-                <Select
-                  name="status_pernikahan"
-                  value={formData.status_pernikahan}
-                  onChange={handleInputChange}
-                  label="Status Pernikahan"
-                  required
-                  size="small"
-                  sx={{ fontSize: '0.875rem' }}
-                >
-                  <MenuItem value="">Pilih status</MenuItem>
-                  <MenuItem value="Belum Menikah">Belum Menikah</MenuItem>
-                  <MenuItem value="Menikah">Menikah</MenuItem>
-                  <MenuItem value="Cerai Mati">Cerai Mati</MenuItem>
-                  <MenuItem value="Cerai Hidup">Cerai Hidup</MenuItem>
-                </Select>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                  Contoh: Menikah
-                </Typography>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth margin="normal">
-                <TextField
-                  label="Lama Tinggal (bulan)"
-                  name="lama_tinggal"
-                  type="number"
-                  value={formData.lama_tinggal}
-                  onChange={handleInputChange}
-                  required
-                  variant="outlined"
-                  size="small"
-                  InputLabelProps={{ style: { fontSize: '0.875rem' } }}
-                  InputProps={{ style: { fontSize: '0.875rem' } }}
-                  inputProps={{ min: 6 }}
-                />
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                  Minimum 6 bulan
-                </Typography>
-              </FormControl>
-            </Grid>
-          </>
-        );
-      case 'Usaha':
-        return (
-          <>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth margin="normal">
-                <TextField
-                  label="Nama Usaha"
-                  name="nama_usaha"
-                  value={formData.nama_usaha}
-                  onChange={handleInputChange}
-                  required
-                  variant="outlined"
-                  size="small"
-                  InputLabelProps={{ style: { fontSize: '0.875rem' } }}
-                  InputProps={{ style: { fontSize: '0.875rem' } }}
-                />
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                  Contoh: Toko Sembako Jaya
-                </Typography>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth margin="normal">
-                <InputLabel sx={{ fontSize: '0.875rem' }}>Jenis Usaha</InputLabel>
-                <Select
-                  name="jenis_usaha"
-                  value={formData.jenis_usaha}
-                  onChange={handleInputChange}
-                  label="Jenis Usaha"
-                  required
-                  size="small"
-                  sx={{ fontSize: '0.875rem' }}
-                >
-                  <MenuItem value="">Pilih jenis usaha</MenuItem>
-                  <MenuItem value="Perdagangan">Perdagangan</MenuItem>
-                  <MenuItem value="Jasa">Jasa</MenuItem>
-                  <MenuItem value="Kuliner">Kuliner</MenuItem>
-                  <MenuItem value="Manufaktur">Manufaktur</MenuItem>
-                  <MenuItem value="Pertanian">Pertanian</MenuItem>
-                  <MenuItem value="Lainnya">Lainnya</MenuItem>
-                </Select>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                  Contoh: Kuliner
-                </Typography>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12}>
-              <FormControl fullWidth margin="normal">
-                <TextField
-                  label="Alamat Usaha"
-                  name="alamat_usaha"
-                  value={formData.alamat_usaha}
-                  onChange={handleInputChange}
-                  required
-                  variant="outlined"
-                  multiline
-                  rows={2}
-                  size="small"
-                  InputLabelProps={{ style: { fontSize: '0.875rem' } }}
-                  InputProps={{ style: { fontSize: '0.875rem' } }}
-                />
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                  Contoh: Jl. Pasar Baru No. 10
-                </Typography>
-              </FormControl>
-            </Grid>
-          </>
-        );
-      case 'Pindah':
-        return (
-          <>
-            <Grid item xs={12}>
-              <FormControl fullWidth margin="normal">
-                <TextField
-                  label="Alamat Tujuan"
-                  name="alamat_tujuan"
-                  value={formData.alamat_tujuan}
-                  onChange={handleInputChange}
-                  required
-                  variant="outlined"
-                  multiline
-                  rows={2}
-                  size="small"
-                  InputLabelProps={{ style: { fontSize: '0.875rem' } }}
-                  InputProps={{ style: { fontSize: '0.875rem' } }}
-                />
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                  Contoh: Jl. Merdeka No. 5, Kota Baru
-                </Typography>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth margin="normal">
-                <InputLabel sx={{ fontSize: '0.875rem' }}>Alasan Pindah</InputLabel>
-                <Select
-                  name="alasan_pindah"
-                  value={formData.alasan_pindah}
-                  onChange={handleInputChange}
-                  label="Alasan Pindah"
-                  required
-                  size="small"
-                  sx={{ fontSize: '0.875rem' }}
-                >
-                  <MenuItem value="">Pilih alasan pindah</MenuItem>
-                  <MenuItem value="Pekerjaan">Pekerjaan</MenuItem>
-                  <MenuItem value="Pendidikan">Pendidikan</MenuItem>
-                  <MenuItem value="Keluarga">Keluarga</MenuItem>
-                  <MenuItem value="Kesehatan">Kesehatan</MenuItem>
-                  <MenuItem value="Lainnya">Lainnya</MenuItem>
-                </Select>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                  Contoh: Pekerjaan
-                </Typography>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth margin="normal">
-                <TextField
-                  label="Keperluan Pindah"
-                  name="keperluan_pindah"
-                  value={formData.keperluan_pindah}
-                  onChange={handleInputChange}
-                  required
-                  variant="outlined"
-                  size="small"
-                  InputLabelProps={{ style: { fontSize: '0.875rem' } }}
-                  InputProps={{ style: { fontSize: '0.875rem' } }}
-                />
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                  Contoh: Pindah rumah
-                </Typography>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth margin="normal">
-                <TextField
-                  label="Tujuan Pindah"
-                  name="tujuan_pindah"
-                  value={formData.tujuan_pindah}
-                  onChange={handleInputChange}
-                  required
-                  variant="outlined"
-                  size="small"
-                  InputLabelProps={{ style: { fontSize: '0.875rem' } }}
-                  InputProps={{ style: { fontSize: '0.875rem' } }}
-                />
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                  Contoh: Kota Surabaya
-                </Typography>
-              </FormControl>
-            </Grid>
-          </>
-        );
-      case 'Kelahiran':
-        return (
-          <>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth margin="normal">
-                <TextField
-                  label="Nama Ayah"
-                  name="nama_ayah"
-                  value={formData.nama_ayah}
-                  onChange={handleInputChange}
-                  required
-                  variant="outlined"
-                  size="small"
-                  InputLabelProps={{ style: { fontSize: '0.875rem' } }}
-                  InputProps={{ style: { fontSize: '0.875rem' } }}
-                />
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                  Contoh: Budi Santoso
-                </Typography>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth margin="normal">
-                <TextField
-                  label61="Nama Ibu"
-                  name="nama_ibu"
-                  value={formData.nama_ibu}
-                  onChange={handleInputChange}
-                  required
-                  variant="outlined"
-                  size="small"
-                  InputLabelProps={{ style: { fontSize: '0.875rem' } }}
-                  InputProps={{ style: { fontSize: '0.875rem' } }}
-                />
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                  Contoh: Ani Wijaya
-                </Typography>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth margin="normal">
-                <TextField
-                  label="Nomor HP"
-                  name="nomor_hp"
-                  value={formData.nomor_hp}
-                  onChange={handleInputChange}
-                  variant="outlined"
-                  type="tel"
-                  size="small"
-                  InputLabelProps={{ style: { fontSize: '0.875rem' } }}
-                  InputProps={{ style: { fontSize: '0.875rem' } }}
-                />
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                  Contoh: +6281234567890
-                </Typography>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth margin="normal">
-                <TextField
-                  label="Tujuan Surat"
-                  name="tujuan_surat"
-                  value={formData.tujuan_surat}
-                  onChange={handleInputChange}
-                  required
-                  variant="outlined"
-                  size="small"
-                  InputLabelProps={{ style: { fontSize: '0.875rem' } }}
-                  InputProps={{ style: { fontSize: '0.875rem' } }}
-                />
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                  Contoh: Pengurusan akta kelahiran
-                </Typography>
-              </FormControl>
-            </Grid>
-          </>
-        );
-      case 'Kematian':
-        return (
-          <>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth margin="normal">
-                <TextField
-                  label="Tanggal Kematian"
-                  name="tgl_kematian"
-                  type="date"
-                  value={formData.tgl_kematian}
-                  onChange={handleInputChange}
-                  required
-                  variant="outlined"
-                  size="small"
-                  InputLabelProps={{ shrink: true, style: { fontSize: '0.875rem' } }}
-                  InputProps={{ style: { fontSize: '0.875rem' } }}
-                  inputProps={{ max: new Date().toISOString().split('T')[0] }}
-                />
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                  Contoh: 2025-04-28
-                </Typography>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth margin="normal">
-                <TextField
-                  label="Penyebab Kematian"
-                  name="penyebab_kematian"
-                  value={formData.penyebab_kematian}
-                  onChange={handleInputChange}
-                  required
-                  variant="outlined"
-                  size="small"
-                  InputLabelProps={{ style: { fontSize: '0.875rem' } }}
-                  InputProps={{ style: { fontSize: '0.875rem' } }}
-                />
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                  Contoh: Sakit jantungan
-                </Typography>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth margin="normal">
-                <TextField
-                  label="Nomor HP"
-                  name="nomor_hp"
-                  value={formData.nomor_hp}
-                  onChange={handleInputChange}
-                  variant="outlined"
-                  type="tel"
-                  size="small"
-                  InputLabelProps={{ style: { fontSize: '0.875rem' } }}
-                  InputProps={{ style: { fontSize: '0.875rem' } }}
-                />
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                  Contoh: +6281234567890
-                </Typography>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth margin="normal">
-                <TextField
-                  label="Tujuan Surat"
-                  name="tujuan_surat"
-                  value={formData.tujuan_surat}
-                  onChange={handleInputChange}
-                  required
-                  variant="outlined"
-                  size="small"
-                  InputLabelProps={{ style: { fontSize: '0.875rem' } }}
-                  InputProps={{ style: { fontSize: '0.875rem' } }}
-                />
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                  Contoh: Pengurusan administrasi kematian
-                </Typography>
-              </FormControl>
-            </Grid>
-          </>
-        );
-      default:
-        return null;
-    }
+                sx={{ fontSize: '0.875rem' }}
+                disabled={field.disabled && nikTerdaftar}
+              >
+                {field.options.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
+                ))}
+              </Select>
+            </>
+          ) : (
+            <TextField
+              label={field.label}
+              name={field.name}
+              type={field.type}
+              value={formData[field.name] || ''}
+              onChange={handleInputChange}
+              required={field.required}
+              variant="outlined"
+              size="small"
+              placeholder={field.placeholder}
+              InputLabelProps={{ style: { fontSize: '0.875rem' }, shrink: field.type === 'date' ? true : undefined }}
+              InputProps={{
+                style: { fontSize: '0.875rem' },
+                endAdornment: field.name === 'nik' && sedangMencariNIK ? <CircularProgress size={20} /> : null,
+              }}
+              inputProps={{
+                max: field.type === 'date' ? new Date().toISOString().split('T')[0] : undefined,
+                min: field.type === 'number' && field.name === 'lama_tinggal' ? 6 : undefined,
+                maxLength: field.name === 'nik' ? 16 : undefined,
+                pattern: field.name === 'nik' ? '\\d*' : undefined,
+              }}
+              multiline={field.multiline}
+              rows={field.rows}
+              disabled={field.disabled && nikTerdaftar}
+            />
+          )}
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
+            {field.placeholder}
+          </Typography>
+        </FormControl>
+      </Grid>
+    ));
   };
 
   return (
@@ -861,239 +634,19 @@ const Home = () => {
                         sx={{ fontSize: '0.875rem' }}
                       >
                         <MenuItem value="">Pilih jenis surat</MenuItem>
-                        <MenuItem value="SKTM">SKTM (Tidak Mampu)</MenuItem>
+                        <MenuItem value="Surat Keterangan Tidak Mampu">Surat Keterangan Tidak Mampu</MenuItem>
                         <MenuItem value="Surat Keterangan Domisili">Surat Keterangan Domisili</MenuItem>
-                        <MenuItem value="Usaha">Keterangan Usaha</MenuItem>
-                        <MenuItem value="Pindah">Keterangan Pindah</MenuItem>
-                        <MenuItem value="Pengantar">Surat Pengantar</MenuItem>
-                        <MenuItem value="Kelahiran">Surat Keterangan Kelahiran</MenuItem>
-                        <MenuItem value="Kematian">Surat Keterangan Kematian</MenuItem>
+                        <MenuItem value="Surat Keterangan Usaha">Surat Keterangan Usaha</MenuItem>
+                        <MenuItem value="Surat Keterangan Pindah">Surat Keterangan Pindah</MenuItem>
+                        <MenuItem value="Surat Pengantar">Surat Pengantar</MenuItem>
+                        <MenuItem value="Surat Keterangan Kelahiran">Surat Keterangan Kelahiran</MenuItem>
+                        <MenuItem value="Surat Keterangan Kematian">Surat Keterangan Kematian</MenuItem>
                       </Select>
                       <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                        Contoh: SKTM (Tidak Mampu)
+                        Contoh: Surat Keterangan Tidak Mampu
                       </Typography>
-                    </FormControl> 
+                    </FormControl>
                   </Grid>
-                  {formData.jenis_surat !== 'Kelahiran' && (
-                    <>
-                      <Grid item xs={12} sm={6}>
-                        <FormControl fullWidth margin="normal">
-                          <TextField
-                            label="NIK (Nomor Induk Kependudukan)"
-                            name="nik"
-                            value={formData.nik}
-                            onChange={handleInputChange}
-                            required
-                            variant="outlined"
-                            size="small"
-                            InputLabelProps={{ style: { fontSize: '0.875rem' } }}
-                            InputProps={{
-                              style: { fontSize: '0.875rem' },
-                              endAdornment: sedangMencariNIK ? <CircularProgress size={20} /> : null,
-                            }}
-                            inputProps={{ maxLength: 16, pattern: '\\d*' }}
-                          />
-                          <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                            Contoh: 1234567890123456
-                          </Typography>
-                        </FormControl>
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <FormControl fullWidth margin="normal">
-                          <TextField
-                            label="Nama Lengkap"
-                            name="nama_lengkap"
-                            value={formData.nama_lengkap}
-                            onChange={handleInputChange}
-                            required
-                            variant="outlined"
-                            size="small"
-                            InputLabelProps={{ style: { fontSize: '0.875rem' } }}
-                            InputProps={{ style: { fontSize: '0.875rem' } }}
-                            disabled={nikTerdaftar}
-                          />
-                          <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                            Contoh: John Doe
-                          </Typography>
-                        </FormControl>
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <FormControl fullWidth margin="normal">
-                          <TextField
-                            label="Tempat Lahir"
-                            name="tempat_lahir"
-                            value={formData.tempat_lahir}
-                            onChange={handleInputChange}
-                            required
-                            variant="outlined"
-                            size="small"
-                            InputLabelProps={{ style: { fontSize: '0.875rem' } }}
-                            InputProps={{ style: { fontSize: '0.875rem' } }}
-                            disabled={nikTerdaftar}
-                          />
-                          <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                            Contoh: Jakarta
-                          </Typography>
-                        </FormControl>
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <FormControl fullWidth margin="normal">
-                          <TextField
-                            label="Tanggal Lahir"
-                            name="tanggal_lahir"
-                            type="date"
-                            value={formData.tanggal_lahir}
-                            onChange={handleInputChange}
-                            required
-                            variant="outlined"
-                            size="small"
-                            InputLabelProps={{ shrink: true, style: { fontSize: '0.875rem' } }}
-                            InputProps={{ style: { fontSize: '0.875rem' } }}
-                            inputProps={{ max: new Date().toISOString().split('T')[0] }}
-                            disabled={nikTerdaftar}
-                          />
-                          <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                            Contoh: 1990-01-01
-                          </Typography>
-                        </FormControl>
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <FormControl fullWidth margin="normal">
-                          <InputLabel sx={{ fontSize: '0.875rem' }}>Jenis Kelamin</InputLabel>
-                          <Select
-                            name="jenis_kelamin"
-                            value={formData.jenis_kelamin}
-                            onChange={handleInputChange}
-                            label="Jenis Kelamin"
-                            required
-                            size="small"
-                            sx={{ fontSize: '0.875rem' }}
-                            disabled={nikTerdaftar}
-                          >
-                            <MenuItem value="">Pilih jenis kelamin</MenuItem>
-                            <MenuItem value="Laki-laki">Laki-laki</MenuItem>
-                            <MenuItem value="Perempuan">Perempuan</MenuItem>
-                          </Select>
-                          <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                            Contoh: Laki-laki
-                          </Typography>
-                        </FormControl>
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <FormControl fullWidth margin="normal">
-                          <InputLabel sx={{ fontSize: '0.875rem' }}>Agama</InputLabel>
-                          <Select
-                            name="agama"
-                            value={formData.agama}
-                            onChange={handleInputChange}
-                            label="Agama"
-                            required
-                            size="small"
-                            sx={{ fontSize: '0.875rem' }}
-                            disabled={nikTerdaftar}
-                          >
-                            <MenuItem value="">Pilih agama</MenuItem>
-                            <MenuItem value="Islam">Islam</MenuItem>
-                            <MenuItem value="Kristen">Kristen</MenuItem>
-                            <MenuItem value="Katolik">Katolik</MenuItem>
-                            <MenuItem value="Hindu">Hindu</MenuItem>
-                            <MenuItem value="Buddha">Buddha</MenuItem>
-                            <MenuItem value="Konghucu">Konghucu</MenuItem>
-                          </Select>
-                          <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                            Contoh: Islam
-                          </Typography>
-                        </FormControl>
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <FormControl fullWidth margin="normal">
-                          <TextField
-                            label="Pekerjaan"
-                            name="pekerjaan"
-                            value={formData.pekerjaan}
-                            onChange={handleInputChange}
-                            required
-                            variant="outlined"
-                            size="small"
-                            InputLabelProps={{ style: { fontSize: '0.875rem' } }}
-                            InputProps={{ style: { fontSize: '0.875rem' } }}
-                            disabled={nikTerdaftar}
-                          />
-                          <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                            Contoh: Petani
-                          </Typography>
-                        </FormControl>
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <FormControl fullWidth margin="normal">
-                          <InputLabel sx={{ fontSize: '0.875rem' }}>Pendidikan</InputLabel>
-                          <Select
-                            name="pendidikan"
-                            value={formData.pendidikan}
-                            onChange={handleInputChange}
-                            label="Pendidikan"
-                            size="small"
-                            sx={{ fontSize: '0.875rem' }}
-                            disabled={nikTerdaftar}
-                          >
-                            <MenuItem value="">Pilih pendidikan</MenuItem>
-                            <MenuItem value="SD">SD</MenuItem>
-                            <MenuItem value="SMP">SMP</MenuItem>
-                            <MenuItem value="SMA">SMA</MenuItem>
-                            <MenuItem value="D3">D3</MenuItem>
-                            <MenuItem value="S1">S1</MenuItem>
-                            <MenuItem value="S2">S2</MenuItem>
-                            <MenuItem value="S3">S3</MenuItem>
-                            <MenuItem value="Lainnya">Lainnya</MenuItem>
-                          </Select>
-                          <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                            Contoh: SMA
-                          </Typography>
-                        </FormControl>
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <FormControl fullWidth margin="normal">
-                          <InputLabel sx={{ fontSize: '0.875rem' }}>Kewarganegaraan</InputLabel>
-                          <Select
-                            name="kewarganegaraan"
-                            value={formData.kewarganegaraan}
-                            onChange={handleInputChange}
-                            label="Kewarganegaraan"
-                            size="small"
-                            sx={{ fontSize: '0.875rem' }}
-                            disabled={nikTerdaftar}
-                          >
-                            <MenuItem value="WNI">WNI</MenuItem>
-                            <MenuItem value="WNA">WNA</MenuItem>
-                          </Select>
-                          <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                            Contoh: WNI
-                          </Typography>
-                        </FormControl>
-                      </Grid>
-                      <Grid item xs={12}>
-                        <FormControl fullWidth margin="normal">
-                          <TextField
-                            label="Alamat Lengkap"
-                            name="alamat_lengkap"
-                            value={formData.alamat_lengkap}
-                            onChange={handleInputChange}
-                            required
-                            variant="outlined"
-                            multiline
-                            rows={2}
-                            size="small"
-                            InputLabelProps={{ style: { fontSize: '0.875rem' } }}
-                            InputProps={{ style: { fontSize: '0.875rem' } }}
-                            disabled={nikTerdaftar}
-                          />
-                          <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
-                            Contoh: Jl. Pendidikan, Kec. Rumbia
-                          </Typography>
-                        </FormControl>
-                      </Grid>
-                    </>
-                  )}
                   {renderAdditionalFields()}
                 </Grid>
                 <Divider sx={{ my: 2 }} />
