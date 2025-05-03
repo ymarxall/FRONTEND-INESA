@@ -1037,7 +1037,8 @@ export default function PermohonanSurat() {
     try {
       setLoading(true);
 
-      const contentElement = document.createElement('div');
+      // const contentElement = document.createElement('div');
+      const contentElement = pdfRef.current;
       contentElement.innerHTML = previewContent;
       contentElement.style.padding = '20px';
       document.body.appendChild(contentElement);
@@ -1434,7 +1435,16 @@ export default function PermohonanSurat() {
             </IconButton>
           </DialogTitle>
           <DialogContent dividers>
-            <div dangerouslySetInnerHTML={{ __html: previewContent }} />
+
+          <div 
+          ref={pdfRef} // Pasang ref di sini
+          dangerouslySetInnerHTML={{ __html: previewContent }} 
+          style={{ 
+            padding: '20px',
+            fontFamily: "'Times New Roman', serif",
+            lineHeight: 1.5 
+          }}/>
+           
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setPreviewContent('')}>Kembali</Button>
@@ -1443,7 +1453,7 @@ export default function PermohonanSurat() {
               variant="contained"
               startIcon={<SaveIcon />}
               disabled={loading}
-            >
+            >  
               Simpan
             </Button>
             <Button
