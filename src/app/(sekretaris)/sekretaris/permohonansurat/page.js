@@ -1,18 +1,40 @@
 'use client';
-import { useState, useEffect } from 'react';
-import {
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Paper, Button, Typography, Card, CardContent, IconButton,
-  CircularProgress, TablePagination, Box, styled,
-  Dialog, DialogTitle, DialogContent, DialogActions, TextField,
-  Chip, MenuItem, Select, FormControl
-} from '@mui/material';
+import { API_ENDPOINTS, getHeaders } from '@/config/api';
 import CloseIcon from '@mui/icons-material/Close';
 import PrintIcon from '@mui/icons-material/Print';
 import SaveIcon from '@mui/icons-material/Save';
-import { API_ENDPOINTS, getHeaders } from '@/config/api';
+import {
+  Box,
+  Button,
+  Card, CardContent,
+  Chip,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  IconButton,
+  MenuItem,
+  Paper,
+  Select,
+  Table, TableBody, TableCell, TableContainer, TableHead,
+  TablePagination,
+  TableRow,
+  TextField,
+  Typography,
+  styled
+} from '@mui/material';
+// import html2pdf from 'html2pdf.js';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import html2pdf from 'html2pdf.js';
+import { useEffect, useState } from 'react';
+
+
+const html2pdf = typeof window !== 'undefined' 
+  ? dynamic(() => import('html2pdf.js').then((mod) => mod.default), { ssr: false })
+  : null;
+
 
 // Styled components
 const StyledCard = styled(Card)({
@@ -1009,6 +1031,8 @@ export default function PermohonanSurat() {
 
   // Simpan surat ke server
   const handleSaveSurat = async () => {
+
+    if (!html2pdf || !pdfRef.current || typeof window === 'undefined') return;
     try {
       setLoading(true);
 
