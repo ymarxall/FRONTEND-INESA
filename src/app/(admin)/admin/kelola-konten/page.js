@@ -43,7 +43,7 @@ const WebsiteContentPage = () => {
           throw new Error('Token tidak ditemukan, silakan login kembali');
         }
         console.log('[FETCH] Mengambil konten dengan token:', token);
-        const res = await axios.get('http://localhost:8080/api/content', {
+        const res = await axios.get('http://192.168.1.85:8080/api/content', {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -140,7 +140,7 @@ const WebsiteContentPage = () => {
         throw new Error('Token tidak ditemukan, silakan login kembali');
       }
       console.log('[SUBMIT] Mengirim data ke /api/content');
-      await axios.put('http://localhost:8080/api/content', formToSend, {
+      await axios.put('http://192.168.1.85:8080/api/content', formToSend, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
@@ -152,7 +152,7 @@ const WebsiteContentPage = () => {
       setLogoFile(null);
 
       // Refresh data after save
-      const res = await axios.get('http://localhost:8080/api/content', {
+      const res = await axios.get('http://192.168.1.85:8080/api/content', {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -192,7 +192,7 @@ const WebsiteContentPage = () => {
         <Box sx={{ textAlign: 'center', mb: 2 }}>
           {formData.logo && !imgError ? (
             <img
-              src={`http://localhost:8080/${formData.logo}`}
+              src={`http://192.168.1.85:8080/${formData.logo}`}
               alt="Logo Website"
               style={{ maxHeight: 100, objectFit: 'contain' }}
               onError={() => setImgError(true)}

@@ -117,7 +117,7 @@ export default function DataPegawai() {
             'Content-Type': 'application/json'
           }
 
-      const res = await fetchWithTimeout('http://localhost:8080/api/pegawai/getall', {
+      const res = await fetchWithTimeout('http://192.168.1.85:8080/api/pegawai/getall', {
         method: 'GET',
         headers,
         credentials: 'include'
@@ -211,7 +211,7 @@ export default function DataPegawai() {
     try {
       setLoading(true)
       const token = getCookie('token')
-      const res = await fetchWithTimeout(`http://localhost:8080/api/pegawai/getpegawaibyid/${row.id}`, {
+      const res = await fetchWithTimeout(`http://192.168.1.85:8080/api/pegawai/getpegawaibyid/${row.id}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -262,7 +262,7 @@ export default function DataPegawai() {
         return
       }
       console.log('[DELETE] Menghapus data dengan ID:', id)
-      const res = await fetchWithTimeout(`http://localhost:8080/api/pegawai/delete/${id}`, {
+      const res = await fetchWithTimeout(`http://192.168.1.85:8080/api/pegawai/delete/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -333,7 +333,7 @@ export default function DataPegawai() {
         return
       }
 
-      const endpoint = editingId ? `http://localhost:8080/api/pegawai/update/${editingId}` : 'http://localhost:8080/api/pegawai/create'
+      const endpoint = editingId ? `http://192.168.1.85:8080/api/pegawai/update/${editingId}` : 'http://192.168.1.85:8080/api/pegawai/create'
       const method = editingId ? 'PUT' : 'POST'
 
       const formDataToSend = new FormData()
@@ -449,7 +449,7 @@ export default function DataPegawai() {
       }
       console.log('[ADMIN] Mengirim data:', payload)
 
-      const res = await fetchWithTimeout('http://localhost:8080/api/admin/create', {
+      const res = await fetchWithTimeout('http://192.168.1.85:8080/api/admin/create', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -570,7 +570,7 @@ export default function DataPegawai() {
                       <TableCell>
                         {row.foto && row.foto !== '-' ? (
                           <img
-                            src={`http://localhost:8080/${row.foto}`}
+                            src={`http://192.168.1.85:8080/${row.foto}`}
                             alt={`Foto ${row.namalengkap}`}
                             style={{
                               width: '50px',
