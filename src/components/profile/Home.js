@@ -86,7 +86,7 @@ const Home = () => {
     jenis_kelamin: '',
     agama: '',
     pekerjaan: '',
-    alamat: '',
+    alamat_lengkap: '',
     pendidikan: '',
     kewarganegaraan: 'WNI',
     jenis_surat: '',
@@ -141,7 +141,7 @@ const Home = () => {
     }
     const requiredFields = [
       'nik', 'nama_lengkap', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin',
-      'agama', 'pekerjaan', 'alamat', 'jenis_surat'
+      'agama', 'pekerjaan', 'alamat_lengkap', 'jenis_surat'
     ];
     if (data.jenis_surat === 'Surat Keterangan Domisili') {
       requiredFields.push('status_pernikahan', 'lama_tinggal');
@@ -217,7 +217,7 @@ const Home = () => {
         jenis_kelamin: result.jenis_kelamin || prev.jenis_kelamin,
         agama: result.agama || prev.agama,
         pekerjaan: result.pekerjaan || prev.pekerjaan,
-        alamat: result.alamat || prev.alamat,
+        alamat_lengkap: result.alamat_lengkap || prev.alamat_lengkap,
         pendidikan: result.pendidikan || prev.pendidikan,
         kewarganegaraan: result.kewarganegaraan || prev.kewarganegaraan,
         penghasilan: result.penghasilan ? String(result.penghasilan) : prev.penghasilan,
@@ -290,7 +290,7 @@ const Home = () => {
         jenis_kelamin: formData.jenis_surat === 'Kelahiran' ? undefined : formData.jenis_kelamin,
         agama: formData.jenis_surat === 'Kelahiran' ? undefined : formData.agama,
         pekerjaan: formData.jenis_surat === 'Kelahiran' ? undefined : formData.pekerjaan,
-        alamat: formData.jenis_surat === 'Kelahiran' ? undefined : formData.alamat,
+        alamat_lengkap: formData.jenis_surat === 'Kelahiran' ? undefined : formData.alamat_lengkap,
         pendidikan: formData.jenis_surat === 'Kelahiran' ? undefined : formData.pendidikan,
         kewarganegaraan: formData.jenis_surat === 'Kelahiran' ? undefined : formData.kewarganegaraan,
         jenis_surat: formData.jenis_surat,
@@ -1075,8 +1075,8 @@ const Home = () => {
                         <FormControl fullWidth margin="normal">
                           <TextField
                             label="Alamat Lengkap"
-                            name="alamat"
-                            value={formData.alamat}
+                            name="alamat_lengkap"
+                            value={formData.alamat_lengkap}
                             onChange={handleInputChange}
                             required
                             variant="outlined"
