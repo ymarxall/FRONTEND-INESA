@@ -143,7 +143,7 @@ const Home = () => {
       'nik', 'nama_lengkap', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin',
       'agama', 'pekerjaan', 'alamat', 'jenis_surat'
     ];
-    if (data.jenis_surat === 'Domisili') {
+    if (data.jenis_surat === 'Surat Keterangan Domisili') {
       requiredFields.push('status_pernikahan', 'lama_tinggal');
     } else if (data.jenis_surat === 'SKTM') {
       requiredFields.push('penghasilan');
@@ -382,7 +382,7 @@ const Home = () => {
             </FormControl>
           </Grid>
         );
-      case 'Domisili':
+      case 'Surat Keterangan Domisili':
         return (
           <>
             <Grid item xs={12} sm={6}>
@@ -862,7 +862,7 @@ const Home = () => {
                       >
                         <MenuItem value="">Pilih jenis surat</MenuItem>
                         <MenuItem value="SKTM">SKTM (Tidak Mampu)</MenuItem>
-                        <MenuItem value="Domisili">Domisili</MenuItem>
+                        <MenuItem value="Surat Keterangan Domisili">Surat Keterangan Domisili</MenuItem>
                         <MenuItem value="Usaha">Keterangan Usaha</MenuItem>
                         <MenuItem value="Pindah">Keterangan Pindah</MenuItem>
                         <MenuItem value="Pengantar">Surat Pengantar</MenuItem>
