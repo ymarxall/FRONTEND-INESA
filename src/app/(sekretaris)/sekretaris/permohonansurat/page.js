@@ -28,7 +28,7 @@ import {
 // import html2pdf from 'html2pdf.js';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 
 const html2pdf = typeof window !== 'undefined' 
@@ -874,6 +874,7 @@ export default function PermohonanSurat() {
   const [formData, setFormData] = useState({});
   const [previewContent, setPreviewContent] = useState('');
   const router = useRouter();
+  const pdfRef = useRef(null);
 
   // Fetch daftar permohonan saat komponen dimuat
   useEffect(() => {
