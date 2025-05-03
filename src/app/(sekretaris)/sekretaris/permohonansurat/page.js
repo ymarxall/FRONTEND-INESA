@@ -31,9 +31,17 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 
-const html2pdf = typeof window !== 'undefined' 
-  ? dynamic(() => import('html2pdf.js').then((mod) => mod.default), { ssr: false })
-  : null;
+// const html2pdf = typeof window !== 'undefined' 
+//   ? dynamic(() => import('html2pdf.js').then((mod) => mod.default), { ssr: false })
+//   : null;
+
+const Html2Pdf = dynamic(
+  () => import('html2pdf.js').then((mod) => mod.default),
+  { 
+    ssr: false,
+    loading: () => <p>Menyiapkan generator PDF...</p>
+  }
+);
 
 
 // Styled components
@@ -874,7 +882,24 @@ export default function PermohonanSurat() {
   const [formData, setFormData] = useState({});
   const [previewContent, setPreviewContent] = useState('');
   const router = useRouter();
+
   const pdfRef = useRef(null);
+  const [html2pdf, setHtml2pdf] = useState(null);
+
+
+  useEffect(() => {
+    const loadHtml2Pdf = async () => {
+      try {
+        const module = await import('html2pdf.js');
+        setHtml2pdf(() => module.default);
+      } catch (err) {
+        console.error('Gagal memuat html2pdf:', err);
+        setError('Gagal memuat generator PDF');
+      }
+    };
+    
+    loadHtml2Pdf();
+  }, []);
 
   // Fetch daftar permohonan saat komponen dimuat
   useEffect(() => {
@@ -1032,46 +1057,60 @@ export default function PermohonanSurat() {
 
   // Simpan surat ke server
   const handleSaveSurat = async () => {
+    if (!html2pdf) {
+      setError('Generator PDF belum siap');
+      return;
+    }
 
-    if (!html2pdf || !pdfRef.current || typeof window === 'undefined') return;
+    if (!pdfRef.current || !previewContent) {
+      setError('Konten preview tidak tersedia');
+      return;
+    }
+
     try {
       setLoading(true);
 
-      // const contentElement = document.createElement('div');
-      const contentElement = pdfRef.current;
-      contentElement.innerHTML = previewContent;
-      contentElement.style.padding = '20px';
-      document.body.appendChild(contentElement);
+      // Clone node untuk menghindari masalah dengan DOM
+      const contentClone = pdfRef.current.cloneNode(true);
+      document.body.appendChild(contentClone);
 
       const opt = {
         margin: [10, 10, 10, 10],
-        filename: `${selectedPermohonan.jenis_surat}_${formData.no_surat}.pdf`,
+        filename: `${selectedPermohonan.jenis_surat}_${formData.no_surat || 'surat'}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        html2canvas: { 
+          scale: 2, 
+          useCORS: true,
+          logging: false,
+          allowTaint: true
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: 'portrait' 
+        },
       };
 
+      // Generate PDF blob
       const pdfBlob = await html2pdf()
         .set(opt)
-        .from(contentElement)
+        .from(contentClone)
         .output('blob');
 
-      document.body.removeChild(contentElement);
+      // Bersihkan clone
+      document.body.removeChild(contentClone);
 
-      let formDataToSend = new FormData();
+      // Siapkan FormData untuk upload
+      const formDataToSend = new FormData();
       formDataToSend.append('id', selectedPermohonan.id);
       formDataToSend.append('nomor', formData.no_surat || '');
-      formDataToSend.append('tanggal', formData.tanggal || new Date().toISOString().split('T')[0]);
+      formDataToSend.append('tanggal', new Date().toISOString().split('T')[0]);
       formDataToSend.append('perihal', formData.keterangan || selectedPermohonan.jenis_surat);
       formDataToSend.append('ditujukan', formData.ditujukan || '');
       formDataToSend.append('title', selectedPermohonan.jenis_surat);
       formDataToSend.append('file', pdfBlob, opt.filename);
 
-      console.log('Data yang dikirim ke server:');
-      for (let pair of formDataToSend.entries()) {
-        console.log(`${pair[0]}: ${pair[1]}`);
-      }
-
+      // Kirim ke server
       const response = await fetch(API_ENDPOINTS.SEKRETARIS.SURAT_KELUAR_ADD, {
         method: 'POST',
         body: formDataToSend,
@@ -1079,70 +1118,46 @@ export default function PermohonanSurat() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('Detail kesalahan dari server:', errorData);
-        if (errorData.message && errorData.message.includes('nomor')) {
-          throw new Error('Nomor surat sudah digunakan, silakan gunakan nomor lain.');
-        }
-        if (errorData.message && errorData.message.includes('ID')) {
-          throw new Error('ID permohonan tidak valid, harus berupa angka.');
-        }
-        if (errorData.message && errorData.message.includes('PDF')) {
-          throw new Error('File harus berupa PDF.');
-        }
-        if (errorData.message && errorData.message.includes('field wajib')) {
-          throw new Error('Semua field harus diisi.');
-        }
-        if (errorData.message && errorData.message.includes('tanggal tidak valid')) {
-          throw new Error('Format tanggal tidak valid, gunakan YYYY-MM-DD.');
-        }
-        throw new Error(`Gagal menyimpan surat: ${errorData.message || 'Kesalahan server'}`);
+        throw new Error(errorData.message || 'Gagal menyimpan surat');
       }
 
-      const responseData = await response.json();
-      console.log('Response dari server:', responseData);
+      // Update status permohonan
+      await updatePermohonanStatus(selectedPermohonan.id);
 
-      // Perbarui status permohonan
-      const updateStatusResponse = await fetch(
-        API_ENDPOINTS.SEKRETARIS.PERMOHONAN_SURAT_UPDATE_STATUS(selectedPermohonan.id),
-        {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ status: 'Selesai' }),
-        }
-      );
-
-      if (!updateStatusResponse.ok) {
-        const updateErrorData = await updateStatusResponse.json();
-        console.error('Detail kesalahan update status:', updateErrorData);
-        throw new Error(
-          updateErrorData.message || `Gagal memperbarui status (Status: ${updateStatusResponse.status})`
-        );
-      }
-
-      // Perbarui permohonanList dengan status baru dan URL file (jika ada)
-      setPermohonanList((prevList) =>
-        prevList.map((item) =>
-          item.id === selectedPermohonan.id
-            ? {
-                ...item,
-                status: 'Selesai',
-                file_url: responseData.file_url || item.file_url, // Simpan URL file jika dikembalikan oleh server
-              }
-            : item
-        )
-      );
-
+      // Reset state dan tampilkan notifikasi
       setPreviewContent('');
       handleCloseForm();
       alert('Surat berhasil disimpan dan status diperbarui.');
+
     } catch (err) {
       setError('Gagal menyimpan surat: ' + err.message);
-      console.error('Kesalahan di handleSaveSurat:', err);
+      console.error('Error:', err);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Fungsi helper untuk update status permohonan
+  const updatePermohonanStatus = async (id) => {
+    const response = await fetch(
+      API_ENDPOINTS.SEKRETARIS.PERMOHONAN_SURAT_UPDATE_STATUS(id),
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Selesai' }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Gagal memperbarui status permohonan');
+    }
+
+    // Update local state
+    setPermohonanList(prevList =>
+      prevList.map(item => 
+        item.id === id ? { ...item, status: 'Selesai' } : item
+      )
+    );
   };
 
   // Cetak surat
@@ -1436,14 +1451,16 @@ export default function PermohonanSurat() {
           </DialogTitle>
           <DialogContent dividers>
 
-          <div 
+          {/* <div 
           ref={pdfRef} // Pasang ref di sini
           dangerouslySetInnerHTML={{ __html: previewContent }} 
           style={{ 
             padding: '20px',
             fontFamily: "'Times New Roman', serif",
             lineHeight: 1.5 
-          }}/>
+          }}/> */}
+
+<div ref={pdfRef} dangerouslySetInnerHTML={{ __html: previewContent }} />
            
           </DialogContent>
           <DialogActions>
